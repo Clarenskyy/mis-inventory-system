@@ -11,5 +11,7 @@ class ItemCreate(ItemBase):
 
 class ItemResponse(ItemBase):
     id: int
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
+

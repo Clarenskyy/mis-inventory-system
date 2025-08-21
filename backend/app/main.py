@@ -10,8 +10,8 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(title="MIS Inventory System")
 
 # routes
-app.include_router(items.router, prefix="items", tags=["Items"])
-app.include_router(users.router, prefix="users", tags=["Users"])
+app.include_router(items.router, prefix="/items", tags=["Items"])
+app.include_router(users.router, prefix="/users", tags=["Users"])
 
 @app.get("/")
 def root():
