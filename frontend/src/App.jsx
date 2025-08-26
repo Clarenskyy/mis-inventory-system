@@ -1,6 +1,8 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, NavLink } from "react-router-dom";
 import "./App.css";
+import "./login/login.jsx";
+import LogInPage from "./login/login.jsx";
 
 const Topbar = () => (
   <div className="topbar">
@@ -39,16 +41,7 @@ const Page = ({ title, children }) => (
   </div>
 );
 
-const Login = () => (
-  <div className="login-container">
-    <div className="login-box">
-      <h2>NIDEC Sign In</h2>
-      <input type="email" placeholder="you@nidec.local" />
-      <input type="password" placeholder="•••••••" />
-      <button>Sign In</button>
-    </div>
-  </div>
-);
+
 
 const Dashboard = () => (
   <Page title="Dashboard">
@@ -61,7 +54,7 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<LogInPage />} />
         <Route
           path="/*"
           element={

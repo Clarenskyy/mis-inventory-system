@@ -1,9 +1,10 @@
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from app.database import get_db
 from app import models, schemas, crud
+from app.utils import email as email_utils
 
 router = APIRouter()
 
@@ -67,3 +68,38 @@ def delete_item(item_id: int, db: Session = Depends(get_db)):
     if not ok:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
     return None
+
+@router.patch("/{item_id}/adjust", response_model=schemas.ItemResponse)
+def adjust_stock(
+    item_id: int,
+    change: int = Query(..., description="Use +N to add, -N to remove", ne=0),
+    note: str = Query("", description="Optional note"),
+    background: BackgroundTasks = Depends(),
+    db: Session = Depends(get_db),
+):
+    item = db.get(models.Item, item_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+
+    old_qty = item.quantity or 0
+    updated = crud.adjust_item_quantity(db, item_id, change, note)
+    if updated is None:
+        raise HTTPException(status_code=400, detail="Invalid adjustment")
+
+    # Fire-and-forget email for stock change
+    background.add_task(
+        email_utils.send_stock_change,
+        code=updated.code, name=updated.name,
+        old_qty=old_qty, new_qty=updated.quantity,
+        note=note
+    )
+
+    # If now below buffer, send low-stock alert
+    if updated.quantity < updated.buffer:
+        background.add_task(
+            email_utils.send_low_stock,
+            code=updated.code, name=updated.name,
+            qty=updated.quantity, buffer=updated.buffer
+        )
+
+    return updated

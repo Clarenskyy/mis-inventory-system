@@ -1,0 +1,37 @@
+.login-container {
+  display: grid;
+  place-items: center;
+  height: 100vh;
+  background: linear-gradient(135deg, white, #f2f2f2);
+}
+
+.login-box {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  width: 320px;
+  text-align: center;
+}
+
+.login-box input {
+  width: 100%;
+  padding: 8px;
+  margin: 6px 0 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.login-box button {
+  width: 100%;
+  padding: 10px;
+  background: #009E4D;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.login-box button:hover {
+  background: #007A3A;
+}

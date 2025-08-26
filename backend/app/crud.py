@@ -53,9 +53,7 @@ def list_items(
     stmt = stmt.limit(limit).offset(offset)
     return db.execute(stmt).scalars().all()
 
-# -----------------------------
-# UPDATE (partial)
-# -----------------------------
+
 def update_item(
     db: Session,
     item_id: int,
@@ -76,14 +74,12 @@ def update_item(
     db.refresh(item)
     return item
 
-# -----------------------------
-# DELETE
-# -----------------------------
+
 def delete_item(db: Session, item_id: int) -> bool:
     item = db.get(models.Item, item_id)
     if not item:
         return False
-    db.delete(item)  # transactions will cascade if model set cascade
+    db.delete(item) 
     db.commit()
     return True
 
