@@ -1,70 +1,80 @@
 # app/utils/email.py
-import smtplib
-from email.message import EmailMessage
-from typing import Iterable, Optional, List
 from app import config
+import smtplib, ssl
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
-def _build_message(subject: str, html: str, to: Iterable[str]) -> EmailMessage:
-    msg = EmailMessage()
+def send_email(subject: str, html_body: str, to_list: list[str] | None = None):
+    to_list = to_list or [e.strip() for e in config.EMAIL_TO_DEFAULT.split(",") if e.strip()]
+    msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
     msg["From"] = config.EMAIL_FROM
-    msg["To"] = ", ".join(to)
-    msg.set_content("This email requires an HTML-capable client.")
-    msg.add_alternative(html, subtype="html")
-    return msg
+    msg["To"] = ", ".join(to_list)
+    msg["Reply-To"] = config.SMTP_USER
 
-def send_email(subject: str, html_body: str, to: Optional[Iterable[str]] = None) -> None:
+    msg.attach(MIMEText(html_body, "html"))
+
+    ctx = ssl.create_default_context()
+    with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT) as smtp:
+        smtp.starttls(context=ctx)
+        smtp.login(config.SMTP_USER, config.SMTP_PASS)
+        smtp.sendmail(config.SMTP_USER, to_list, msg.as_string())
+
+def send_low_stock(*, code: str, name: str, qty: int, buffer: int, to: list[str] | None = None):
+    # ✅ Better subject: includes qty and buffer
+    subject = f"⚠️ Low Stock: {name} ({code}) — Qty {qty} / Buffer {buffer}"
+
+    # Mobile-friendly, inline-styled HTML
+    html = f"""
+    <div style="font-family:Segoe UI,Arial,sans-serif;max-width:560px;margin:auto;border:1px solid #e5e7eb;border-radius:12px;padding:16px">
+      <h2 style="margin:0 0 8px 0;font-size:18px;color:#111827">
+        ⚠️ Low Stock Alert
+      </h2>
+      <p style="margin:0 0 12px 0;color:#374151;font-size:14px">
+        The item below is at or below its buffer.
+      </p>
+      <table style="border-collapse:collapse;width:100%;font-size:14px">
+        <tr>
+          <td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;width:35%">Item</td>
+          <td style="padding:8px;border:1px solid #e5e7eb">{name}</td>
+        </tr>
+        <tr>
+          <td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb">Code</td>
+          <td style="padding:8px;border:1px solid #e5e7eb">{code}</td>
+        </tr>
+        <tr>
+          <td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb">Current Quantity</td>
+          <td style="padding:8px;border:1px solid #e5e7eb"><b>{qty}</b></td>
+        </tr>
+        <tr>
+          <td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb">Buffer</td>
+          <td style="padding:8px;border:1px solid #e5e7eb"><b>{buffer}</b></td>
+        </tr>
+      </table>
+      <p style="margin:12px 0 4px 0;color:#374151;font-size:14px">
+        Please review and restock as needed.
+      </p>
+      <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0">
+      <div style="font-size:12px;color:#6b7280">
+        Nidec MIS Inventory System
+      </div>
+    </div>
     """
-    Sends an email via SMTP using settings from config.py.
-    Raises on error. Call this inside BackgroundTasks for non-blocking behavior.
-    """
-    recipients: List[str] = list(to) if to else config.EMAIL_TO_DEFAULT
-    if not recipients:
-        # No recipients configured; silently skip or raise depending on your policy
-        return
+    send_email(subject, html, to_list=to)
 
-    msg = _build_message(subject, html_body, recipients)
-
-    with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT, timeout=30) as smtp:
-        smtp.starttls()
-        if config.SMTP_USER and config.SMTP_PASS:
-            smtp.login(config.SMTP_USER, config.SMTP_PASS)
-        smtp.send_message(msg)
-
-
-def stock_change_html(code: str, name: str, old_qty: int, new_qty: int, note: str = "") -> str:
+def send_stock_change(*, code: str, name: str, old_qty: int, new_qty: int, note: str = "", to: list[str] | None = None):
     delta = new_qty - old_qty
-    arrow = "⬆️" if delta > 0 else ("⬇️" if delta < 0 else "➡️")
-    return f"""
-    <div style="font-family:Arial,sans-serif">
-      <h3>Inventory Update: {code}</h3>
-      <p><strong>{name}</strong></p>
-      <p>{arrow} Quantity changed: <strong>{old_qty} → {new_qty}</strong> (Δ {delta})</p>
-      {"<p>Note: " + note + "</p>" if note else ""}
-      <hr/>
-      <small>Nidec MIS Inventory</small>
+    sign = "+" if delta >= 0 else ""
+    subject = f"Stock Change: {name} ({code}) — {sign}{delta} → {new_qty}"
+    note_html = f"<p style='margin:6px 0;color:#6b7280'>Note: {note}</p>" if note else ""
+    html = f"""
+    <div style="font-family:Segoe UI,Arial,sans-serif;max-width:560px;margin:auto;border:1px solid #e5e7eb;border-radius:12px;padding:16px">
+      <h2 style="margin:0 0 8px 0;font-size:18px;color:#111827">Stock Change</h2>
+      <p style="margin:0 0 12px 0;color:#374151;font-size:14px">{name} ({code})</p>
+      <p style="margin:0;color:#374151;font-size:14px">Old: <b>{old_qty}</b> &nbsp; → &nbsp; New: <b>{new_qty}</b> &nbsp; (Δ {sign}{delta})</p>
+      {note_html}
+      <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0">
+      <div style="font-size:12px;color:#6b7280">Nidec MIS Inventory System</div>
     </div>
     """
-
-def low_stock_html(code: str, name: str, qty: int, buffer: int) -> str:
-    return f"""
-    <div style="font-family:Arial,sans-serif">
-      <h3>⚠️ Low Stock Alert</h3>
-      <p><strong>{name} ({code})</strong></p>
-      <p>Current Quantity: <strong>{qty}</strong><br/>
-         Buffer Threshold: <strong>{buffer}</strong></p>
-      <p>Please review and restock as needed.</p>
-      <hr/>
-      <small>Nidec MIS Inventory</small>
-    </div>
-    """
-
-def send_stock_change(code: str, name: str, old_qty: int, new_qty: int, note: str = "", to=None) -> None:
-    html = stock_change_html(code, name, old_qty, new_qty, note)
-    subject = f"[MIS] Stock Update — {code} ({old_qty}→{new_qty})"
-    send_email(subject, html, to)
-
-def send_low_stock(code: str, name: str, qty: int, buffer: int, to=None) -> None:
-    html = low_stock_html(code, name, qty, buffer)
-    subject = f"[MIS] Low Stock — {code}: {qty} < {buffer}"
-    send_email(subject, html, to)
+    send_email(subject, html, to_list=to)

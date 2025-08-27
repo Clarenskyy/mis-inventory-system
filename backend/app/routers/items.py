@@ -11,14 +11,13 @@ router = APIRouter()
 # ---------- Create ----------
 @router.post("/", response_model=schemas.ItemResponse, status_code=status.HTTP_201_CREATED)
 def create_item(payload: schemas.ItemCreate, db: Session = Depends(get_db)):
-    # enforce unique code (2.0 style)
+    # Enforce unique code (SQLAlchemy 2.0 style)
     exists = db.execute(select(models.Item).where(models.Item.code == payload.code)).scalar_one_or_none()
     if exists:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Item code already exists")
     try:
         return crud.create_item(db, payload)
     except ValueError as e:
-        # in case crud.create_item also raises on duplicates
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
 
 # ---------- Read (list with search/pagination) ----------
@@ -53,32 +52,42 @@ def adjust_stock(
     item_id: int,
     change: int = Query(..., description="Use +N to add, -N to remove", ne=0),
     note: str = Query("", description="Optional note"),
-    background: BackgroundTasks = None,   # ← no Depends()
+    background: BackgroundTasks = None,     # FastAPI injects this; no Depends()
     db: Session = Depends(get_db),
 ):
     if background is None:
-        # FastAPI will pass a BackgroundTasks instance at runtime; this keeps type checkers happy
-        background = BackgroundTasks()
+        background = BackgroundTasks()  # type: ignore[call-arg]
 
     item = db.get(models.Item, item_id)
     if not item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
 
     old_qty = item.quantity or 0
+    was_ok = old_qty >= (item.buffer or 0)
+
     updated = crud.adjust_item_quantity(db, item_id, change, note)
     if updated is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid adjustment")
 
-    # enqueue emails
-    from app.utils import email as email_utils
+    # Always send a stock-change notice
     background.add_task(
         email_utils.send_stock_change,
-        code=updated.code, name=updated.name, old_qty=old_qty, new_qty=updated.quantity, note=note
+        code=updated.code,
+        name=updated.name,
+        old_qty=old_qty,
+        new_qty=updated.quantity,
+        note=note,
     )
-    if updated.quantity < updated.buffer:
+
+    # Only send low-stock alert when crossing from OK -> LOW
+    is_low = updated.quantity < (updated.buffer or 0)
+    if was_ok and is_low:
         background.add_task(
             email_utils.send_low_stock,
-            code=updated.code, name=updated.name, qty=updated.quantity, buffer=updated.buffer
+            code=updated.code,
+            name=updated.name,
+            qty=updated.quantity,
+            buffer=updated.buffer,
         )
 
     return updated
@@ -91,6 +100,7 @@ def delete_item(item_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
     return None
 
+'''
 @router.patch("/{item_id}/adjust", response_model=schemas.ItemResponse)
 def adjust_stock(
     item_id: int,
@@ -125,3 +135,4 @@ def adjust_stock(
         )
 
     return updated
+'''

@@ -51,7 +51,6 @@ def low_stock_html(code: str, name: str, qty: int, buffer: int) -> str:
       <h3>⚠️ Low Stock Alert</h3>
       <p><strong>{name} ({code})</strong></p>
       <p>Current Quantity: <strong>{qty}</strong><br/>
-         Buffer Threshold: <strong>{buffer}</strong></p>
       <p>Please review and restock as needed.</p>
       <hr/>
       <small>Nidec MIS Inventory</small>
