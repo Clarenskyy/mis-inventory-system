@@ -53,12 +53,34 @@ def adjust_stock(
     item_id: int,
     change: int = Query(..., description="Use +N to add, -N to remove", ne=0),
     note: str = Query("", description="Optional note"),
+    background: BackgroundTasks = None,   # ← no Depends()
     db: Session = Depends(get_db),
 ):
+    if background is None:
+        # FastAPI will pass a BackgroundTasks instance at runtime; this keeps type checkers happy
+        background = BackgroundTasks()
+
+    item = db.get(models.Item, item_id)
+    if not item:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
+
+    old_qty = item.quantity or 0
     updated = crud.adjust_item_quantity(db, item_id, change, note)
     if updated is None:
-        # either item not found or rule prevented change (e.g., negative stock)
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found or invalid adjustment")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid adjustment")
+
+    # enqueue emails
+    from app.utils import email as email_utils
+    background.add_task(
+        email_utils.send_stock_change,
+        code=updated.code, name=updated.name, old_qty=old_qty, new_qty=updated.quantity, note=note
+    )
+    if updated.quantity < updated.buffer:
+        background.add_task(
+            email_utils.send_low_stock,
+            code=updated.code, name=updated.name, qty=updated.quantity, buffer=updated.buffer
+        )
+
     return updated
 
 # ---------- Delete ----------
@@ -74,7 +96,7 @@ def adjust_stock(
     item_id: int,
     change: int = Query(..., description="Use +N to add, -N to remove", ne=0),
     note: str = Query("", description="Optional note"),
-    background: BackgroundTasks = Depends(),
+    background: BackgroundTasks = None,
     db: Session = Depends(get_db),
 ):
     item = db.get(models.Item, item_id)
