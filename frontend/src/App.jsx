@@ -1,8 +1,8 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, NavLink } from "react-router-dom";
 import "./App.css";
-import "./login/login.jsx";
-import LogInPage from "./login/login.jsx";
+import "./login/Login.jsx";
+import LogInPage from "./login/Login.jsx";
 
 const Topbar = () => (
   <div className="topbar">
