@@ -1,6 +1,16 @@
+# app/models.py
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, func, Text, Index
 from sqlalchemy.orm import relationship
 from app.database import Base
+
+class Category(Base):
+    __tablename__ = "categories"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(120), nullable=False, unique=True)
+    code = Column(String(64), nullable=True, unique=True)
+    buffer = Column(Integer, nullable=False, default=0)  # buffer now here
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    items = relationship("Item", back_populates="category", cascade="all, delete-orphan")
 
 class Item(Base):
     __tablename__ = "items"
@@ -9,15 +19,15 @@ class Item(Base):
     code = Column(String(64), unique=True, index=True, nullable=False)
     name = Column(String(255), nullable=False)
     quantity = Column(Integer, nullable=False, default=0)
-    buffer = Column(Integer, nullable=False, default=0)
+
+    category_id = Column(Integer, ForeignKey("categories.id", ondelete="RESTRICT"), nullable=False, index=True)
+    category = relationship("Category", back_populates="items")
 
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
     transactions = relationship("Transaction", back_populates="item", cascade="all, delete-orphan")
 
-    def __repr__(self):
-        return f"<Item id={self.id} code={self.code} qty={self.quantity}>"
 
 class User(Base):
     __tablename__ = "users"
@@ -49,8 +59,3 @@ class Transaction(Base):
 
     def __repr__(self):
         return f"<Transaction id={self.id} item_id={self.item_id} delta={self.qty_change}>"
-
-# Optional: case-insensitive unique code (Postgres only)
-# __table_args__ = (
-#     Index("uq_items_code_lower", func.lower(Item.code), unique=True),
-# )

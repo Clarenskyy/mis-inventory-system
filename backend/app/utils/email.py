@@ -78,3 +78,32 @@ def send_stock_change(*, code: str, name: str, old_qty: int, new_qty: int, note:
     </div>
     """
     send_email(subject, html, to_list=to)
+
+def send_category_low_stock(
+    category_code: str,
+    category_name: str,
+    total_qty: int,
+    buffer: int,
+    affected_item_code: str | None = None,
+    affected_item_name: str | None = None,
+    to_list=None,
+):
+    affected = ""
+    if affected_item_code or affected_item_name:
+        label = f"{affected_item_name or ''} ({affected_item_code or ''})".strip()
+        affected = f'<p style="margin:0 0 8px 0;color:#374151;font-size:14px">Affected Item: <b>{label}</b></p>'
+
+    html = f"""
+    <div style="font-family:Segoe UI,Arial,sans-serif;max-width:560px;margin:auto;border:1px solid #e5e7eb;border-radius:12px;padding:16px">
+      <h2 style="margin:0 0 8px 0;font-size:18px;color:#111827">⚠️ Category Low Stock</h2>
+      <p style="margin:0 0 12px 0;color:#374151;font-size:14px">{category_name} ({category_code})</p>
+      {affected}
+      <p style="margin:0 0 4px 0;color:#374151;font-size:14px">Total Quantity: <b>{total_qty}</b></p>
+      <p style="margin:0;color:#374151;font-size:14px">Category Buffer: <b>{buffer}</b></p>
+      <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0">
+      <div style="font-size:12px;color:#6b7280">Nidec MIS Inventory System</div>
+    </div>
+    """
+    subject = f"⚠️ Low Stock (Category {category_name}) — Total {total_qty} / Buffer {buffer}"
+    send_email(subject, html, to_list=to_list)
+
