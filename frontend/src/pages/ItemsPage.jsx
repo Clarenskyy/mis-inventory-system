@@ -1,45 +1,136 @@
-import { useQuery } from "@tanstack/react-query";
-import { api } from "../lib/api";
-
-async function fetchItems() {
-  const res = await api.get("/items"); // adjust if your API wraps data (e.g., res.data.items)
-  return res.data;
-}
+import { useEffect, useMemo, useState } from "react";
+import { api } from "../lib/api.js"; // adjust if your path/filename differs
+import "./items.css";
 
 export default function ItemsPage() {
-  const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ["items"],
-    queryFn: fetchItems,
-  });
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [q, setQ] = useState("");
+  const [onlyLow, setOnlyLow] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    setLoading(true);
+    api.get("/items")
+      .then((res) => isMounted && setItems(Array.isArray(res.data) ? res.data : res.data.items ?? []))
+      .catch(() => isMounted && setItems([]))
+      .finally(() => isMounted && setLoading(false));
+    return () => { isMounted = false; };
+  }, []);
+
+  const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    return items.filter((it) => {
+      const matches =
+        !needle ||
+        it.code?.toLowerCase().includes(needle) ||
+        it.name?.toLowerCase().includes(needle);
+      const low = (it.quantity ?? 0) <= (it.buffer ?? 0);
+      return matches && (!onlyLow || low);
+    });
+  }, [items, q, onlyLow]);
 
   return (
-    <section style={{ display: "grid", gap: 12 }}>
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <h1 style={{ fontWeight: 600 }}>Items</h1>
-        <button onClick={() => refetch()}>Refresh</button>
+    <div className="items-wrap">
+      {/* Page header */}
+      <div className="items-head">
+        <h1>Items</h1>
+        <div className="head-actions">
+          <button className="btn ghost" onClick={() => window.location.reload()}>Refresh</button>
+          <button className="btn primary">+ Add Item</button>
+        </div>
       </div>
 
-      {isLoading && <div>Loading…</div>}
-      {isError && <div style={{ color: "red" }}>Failed to load items.</div>}
+      {/* Tools */}
+      <div className="items-toolbar">
+        <div className="search">
+          <span aria-hidden>🔎</span>
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search code or name…"
+          />
+        </div>
+        <label className="toggle">
+          <input
+            type="checkbox"
+            checked={onlyLow}
+            onChange={(e) => setOnlyLow(e.target.checked)}
+          />
+          <span>Low stock only</span>
+        </label>
+      </div>
 
-      {Array.isArray(data) && data.length > 0 ? (
-        <table>
-          <thead>
-            <tr><th>ID</th><th>Code</th><th>Name</th><th>Qty</th><th>Buffer</th></tr>
-          </thead>
-          <tbody>
-            {data.map((it) => (
-              <tr key={it.id}>
-                <td>{it.id}</td>
-                <td>{it.code}</td>
-                <td>{it.name}</td>
-                <td>{it.quantity}</td>
-                <td>{it.buffer}</td>
+      {/* Table */}
+      <div className="card">
+        {loading ? (
+          <LoadingRows />
+        ) : filtered.length === 0 ? (
+          <EmptyState onClear={() => { setQ(""); setOnlyLow(false); }} />
+        ) : (
+          <table className="items-table">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Name</th>
+                <th className="num">Qty</th>
+                <th className="num">Buffer</th>
+                <th>Status</th>
+                <th className="right">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : (!isLoading && <div>No items yet.</div>)}
-    </section>
+            </thead>
+            <tbody>
+              {filtered.map((it) => (
+                <tr key={it.id}>
+                  <td className="mono">{it.code}</td>
+                  <td>{it.name}</td>
+                  <td className="num">{it.quantity}</td>
+                  <td className="num">{it.buffer}</td>
+                  <td>
+                    <Status quantity={it.quantity} buffer={it.buffer} />
+                  </td>
+                  <td className="right">
+                    <button className="btn tiny">Edit</button>
+                    <button className="btn tiny danger">Delete</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Small components ---------- */
+
+function Status({ quantity = 0, buffer = 0 }) {
+  if (quantity <= 0) return <span className="pill danger">Out</span>;
+  if (quantity <= buffer) return <span className="pill warn">Low</span>;
+  return <span className="pill ok">OK</span>;
+}
+
+function LoadingRows() {
+  return (
+    <div className="loading">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div className="row" key={i} />
+      ))}
+    </div>
+  );
+}
+
+function EmptyState({ onClear }) {
+  return (
+    <div className="empty">
+      <div className="emoji" aria-hidden>📦</div>
+      <h3>No items</h3>
+      <p>Try clearing filters or add a new item.</p>
+      <div className="actions">
+        <button className="btn ghost" onClick={onClear}>Clear filters</button>
+        <button className="btn primary">+ Add Item</button>
+      </div>
+    </div>
   );
 }
