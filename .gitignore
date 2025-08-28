@@ -1,0 +1,14 @@
+# Python virtual environments
+venv/
+.venv/
+
+# Node files
+node_modules/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Accidental files in your repo
+.venvScriptsactivate
+cd
