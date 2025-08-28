@@ -1,76 +1,36 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route, NavLink } from "react-router-dom";
-import "./App.css";
-import "./login/Login.jsx";
-import LogInPage from "./login/Login.jsx";
-
-const Topbar = () => (
-  <div className="topbar">
-    <div className="topbar-logo">
-      <div className="topbar-logo-box"></div>
-      NIDEC MIS Inventory
-    </div>
-    <div className="topbar-user">Signed in as you@nidec.local</div>
-  </div>
-);
-
-const Sidebar = () => (
-  <div className="sidebar">
-    {[
-      ["/dashboard", "🏠 Dashboard"],
-      ["/items", "📦 Items"],
-      ["/transactions", "🔁 Transactions"],
-      ["/alerts", "⚠️ Alerts"],
-      ["/reports", "📈 Reports"],
-      ["/users", "👥 Users"],
-      ["/settings", "⚙️ Settings"],
-    ].map(([to, label]) => (
-      <NavLink key={to} to={to} className={({ isActive }) => (isActive ? "active" : "")}>
-        {label}
-      </NavLink>
-    ))}
-  </div>
-);
-
-const Page = ({ title, children }) => (
-  <div className="page">
-    <div className="page-header">
-      <h1>{title}</h1>
-    </div>
-    {children}
-  </div>
-);
-
-
-
-const Dashboard = () => (
-  <Page title="Dashboard">
-    <div className="card">📦 Items summary here</div>
-    <div className="card">⚠️ Alerts summary here</div>
-  </Page>
-);
+import { Outlet, Link, useLocation } from "react-router-dom";
 
 export default function App() {
+  const { pathname } = useLocation();
+  const LinkBtn = ({ to, label }) => (
+    <Link
+      to={to}
+      style={{
+        padding: "8px 12px",
+        borderRadius: 8,
+        background: pathname === to ? "#eee" : "transparent",
+        textDecoration: "none",
+        color: "inherit",
+      }}
+    >
+      {label}
+    </Link>
+  );
+
   return (
-    <Router>
-      <Routes>
-        <Route path="/login" element={<LogInPage />} />
-        <Route
-          path="/*"
-          element={
-            <div style={{ display: "flex" }}>
-              <Sidebar />
-              <div style={{ flex: 1 }}>
-                <Topbar />
-                <Routes>
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="*" element={<Dashboard />} />
-                </Routes>
-              </div>
-            </div>
-          }
-        />
-      </Routes>
-    </Router>
+    <div>
+      <header style={{ position: "sticky", top: 0, background: "#fff", borderBottom: "1px solid #eee" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 960, margin: "0 auto", padding: 12 }}>
+          <div style={{ fontWeight: 600 }}>Nidec MIS Inventory</div>
+          <nav style={{ display: "flex", gap: 8 }}>
+            <LinkBtn to="/items" label="Items" />
+            <LinkBtn to="/login" label="Login" />
+          </nav>
+        </div>
+      </header>
+      <main style={{ maxWidth: 960, margin: "0 auto", padding: 16 }}>
+        <Outlet />
+      </main>
+    </div>
   );
 }
