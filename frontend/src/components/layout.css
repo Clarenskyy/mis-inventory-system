@@ -1,0 +1,147 @@
+:root {
+  --sidebar-bg: #f8fafc;
+  --sidebar-active: #dbeafe;
+  --sidebar-hover: #f1f5f9;
+  --line: #e5e7eb;
+  --ink: #0f172a;
+  --accent: #059669;
+}
+
+.app-root {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--line);
+  padding: 20px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.nav-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 10px;
+  border-radius: 12px;
+  font-size: 18px;
+  color: var(--ink);
+  text-decoration: none;
+  transition: 0.2s;
+}
+
+.nav-link:hover {
+  background: var(--sidebar-hover);
+}
+
+.nav-link.active {
+  background: var(--sidebar-active);
+  font-weight: 600;
+}
+
+.nav-icon {
+  font-size: 28px;
+  margin-bottom: 6px;
+}
+
+/* Main panel */
+.main {
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 64px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--line);
+  background: white;
+}
+
+/* Brand inside topbar */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 20px;
+}
+
+.brand-swatch {
+  width: 18px;
+  height: 18px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+.brand-text {
+  font-size: 18px;
+}
+
+/* User avatar + menu */
+.avatar {
+  width: 44px;
+  height: 44px;
+  font-size: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: white;
+  cursor: pointer;
+}
+
+.user {
+  position: relative;
+}
+
+.menu {
+  position: absolute;
+  right: 0;
+  top: 55px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0,0,0,.1);
+  padding: 8px;
+  min-width: 180px;
+}
+
+.menu-email {
+  font-size: 13px;
+  color: gray;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.menu-item {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: white;
+  padding: 10px 8px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.menu-item:hover {
+  background: var(--sidebar-hover);
+}
+
+.content {
+  flex: 1;
+  padding: 20px;
+  background: #f9fafb;
+}
