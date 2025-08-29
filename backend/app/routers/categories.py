@@ -4,7 +4,7 @@ from app.database import get_db
 from app import schemas, models
 from sqlalchemy import select
 
-router = APIRouter(prefix="/categories", tags=["Categories"])
+router = APIRouter()
 
 @router.post("/", response_model=schemas.CategoryResponse, status_code=status.HTTP_201_CREATED)
 def create_category(payload: schemas.CategoryCreate, db: Session = Depends(get_db)):

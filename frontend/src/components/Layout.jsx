@@ -30,6 +30,7 @@ export default function Layout() {
         <nav className="nav">
           <NavItem to="/dashboard" label="Dashboard" icon="📊" />
           <NavItem to="/items" label="Items" icon="📦" />
+          <NavItem to="/product-category" label="Product Category" icon="🗂️" />
         </nav>
       </aside>
 

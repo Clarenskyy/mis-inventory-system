@@ -1,0 +1,78 @@
+.dash-wrap{
+  display:grid;
+  gap:16px;
+}
+
+.dash-title{
+  margin: 4px 0 2px;
+  font-size: 32px;
+  line-height: 1.1;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.card{
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.dash-welcome{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  flex-wrap:wrap;
+}
+
+.welcome-text{
+  display:grid;
+  gap:6px;
+  min-width: 260px;
+}
+
+.welcome-title{
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.welcome-name{
+  color: #059669;
+}
+
+.welcome-sub{
+  margin:0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.stats{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.stat{
+  min-width: 160px;
+  padding: 14px 16px;
+  border:1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f8fafc;
+  text-align:center;
+}
+
+.stat-label{
+  font-size:12px;
+  color: #6b7280;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.stat-value{
+  font-size: 28px;
+  font-weight: 800;
+  color: #0f172a;
+}

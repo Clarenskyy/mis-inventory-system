@@ -6,6 +6,7 @@ import Layout from "./components/Layout.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import ItemsPage from "./pages/ItemsPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx"; // your placeholder is fine
+import ProductCategoryPage from "./pages/ProductCategoryPage.jsx";
 import "./index.css";
 
 const queryClient = new QueryClient();
@@ -18,6 +19,7 @@ const router = createBrowserRouter([
       { index: true, element: <Dashboard /> },
       { path: "dashboard", element: <Dashboard /> },
       { path: "items", element: <ItemsPage /> },
+      { path: "product-category", element: <ProductCategoryPage /> },
     ],
   },
   { path: "/login", element: <LoginPage /> },

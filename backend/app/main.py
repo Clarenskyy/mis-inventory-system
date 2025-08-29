@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from app.database import engine, Base
-from app.routers import items, users, test_email, categories
+from app.routers import categories,items, users, test_email
 from app import models
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -12,7 +12,7 @@ app = FastAPI(title="MIS Inventory System")
 
 
 app.add_middleware(
-    CORSMiddleware,
+    CORSMiddleware, 
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],

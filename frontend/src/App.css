@@ -1,0 +1,134 @@
+/* src/app.css */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  color: #111827;
+  background: #f3f4f6;
+}
+
+/* ===== Layout ===== */
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* ===== Sidebar (icons on top, label below) ===== */
+.sidebar {
+  width: 240px;
+  flex: 0 0 240px;
+  background: #ffffff;
+  border-right: 1px solid #e5e7eb;
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #fff;
+  cursor: pointer;
+  user-select: none;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+}
+.nav-btn:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+.nav-btn.active {
+  background: #e8f0ff;          /* light blue like your screenshot */
+  border-color: #a5b4fc;
+  box-shadow: inset 0 0 0 1px #93c5fd;
+}
+
+.nav-icon { color: #111827; }
+.nav-btn.active .nav-icon { color: #1d4ed8; }
+
+.nav-text {
+  font-size: 14px;
+  color: #111827;
+}
+.nav-btn.active .nav-text { color: #1d4ed8; }
+
+/* ===== Right column ===== */
+.main-col {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Top bar */
+.topbar {
+  height: 56px;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 15px;
+}
+.brand-dot {
+  width: 14px;
+  height: 14px;
+  background: #16a34a; /* green square */
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.user-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  cursor: pointer;
+}
+.avatar { font-size: 18px; }
+
+/* Panel body */
+.panel { padding: 18px; overflow: auto; }
+
+/* Shared UI */
+.card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1rem;
+}
+.btn {
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+}
+.btn.primary { background: #2563eb; border-color: #2563eb; color: #fff; }
+.btn.ghost   { background: transparent; }
+.btn.danger  { background: #dc2626; border-color: #dc2626; color: #fff; }
+.btn.tiny    { padding: 0.25rem 0.5rem; font-size: 0.78rem; }
