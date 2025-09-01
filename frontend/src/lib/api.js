@@ -1,32 +1,46 @@
-// src/lib/api.jsx
+// src/lib/api.js
 import axios from "axios";
 
+const API_BASE_URL =
+  import.meta?.env?.VITE_API_BASE_URL?.replace(/\/+$/, "") || "http://127.0.0.1:8000";
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: API_BASE_URL,
+  headers: { "Content-Type": "application/json" },
 });
 
-/* Reads */
-export const getItems = () =>
-  api.get("/items").then(r => (Array.isArray(r.data) ? r.data : r.data?.items ?? []));
-export const getCategories = () =>
-  api.get("/categories").then(r => (Array.isArray(r.data) ? r.data : []));
+// ---------- Items ----------
+export async function getItems() {
+  const r = await api.get("/items");
+  // backend returns either array or {items:[]}
+  return Array.isArray(r.data) ? r.data : (r.data?.items ?? []);
+}
+export async function createItem(data) {
+  const r = await api.post("/items", data);
+  return r.data;
+}
+export async function updateItem(id, data) {
+  const r = await api.put(`/items/${id}`, data);
+  return r.data;
+}
+export async function deleteItem(id) {
+  await api.delete(`/items/${id}`);
+}
+export async function adjustItem(id, change, note = "") {
+  const r = await api.patch(`/items/${id}/adjust`, null, { params: { change, note } });
+  return r.data;
+}
 
-/* Create / Update / Delete */
-export const createItem = (data) =>
-  api.post("/items", data).then(r => r.data);
-
-export const updateItem = (id, data) =>
-  api.patch(`/items/${id}`, data).then(r => r.data);
-
-export const deleteItem = (id) =>
-  api.delete(`/items/${id}`).then(r => r.data);
-
-/* ✅ Quantity adjust via QUERY PARAMS (emails + low-stock handled server-side) */
-export const adjustItem = (id, change, note = "") =>
-  api.patch(`/items/${id}/adjust`, null, {
-    params: { change: Number(change), note },
-  }).then(r => r.data).catch(err => {
-    // Some servers reply 204 No Content on success; treat as OK
-    if (err?.response?.status === 204) return;
-    throw err;
-  });
+// ---------- Categories ----------
+export async function getCategories() {
+  const r = await api.get("/categories");
+  return Array.isArray(r.data) ? r.data : [];
+}
+export async function createCategory(data) {
+  const r = await api.post("/categories", data);
+  return r.data;
+}
+export async function updateCategory(id, data) {
+  const r = await api.patch(`/categories/${id}`, data);
+  return r.data;
+}

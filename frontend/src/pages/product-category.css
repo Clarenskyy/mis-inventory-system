@@ -1,0 +1,277 @@
+/* container */
+.cat-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* header */
+.cat-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.cat-head h1 {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+}
+.head-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 2-column layout */
+.cat-grid {
+  display: grid;
+  grid-template-columns: 240px 1fr; /* slimmer left rail */
+  gap: 20px;
+  align-items: start;
+}
+
+/* LEFT rail */
+.cat-list h3 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #445;
+}
+.cat-list-body {
+  background: #fff;
+  border: 1px solid #e7e9ee;
+  border-radius: 10px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: calc(100vh - 220px);
+  overflow: auto;
+}
+.cat-pill {
+  text-align: left;
+  border: 1px solid #e7e9ee;
+  border-radius: 9px;
+  padding: 10px 12px;
+  background: #fff;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.cat-pill:hover { background: #f7f9fc; }
+.cat-pill.active {
+  background: #eef6ff;
+  border-color: #b6d6ff;
+}
+.cat-pill .name { font-weight: 600; color: #24324a; }
+.cat-pill .sub { font-size: 12px; color: #6b7280; margin-top: 2px; }
+
+/* RIGHT side */
+.cat-main { display: flex; flex-direction: column; gap: 14px; }
+
+.card {
+  background: #fff;
+  border: 1px solid #e7e9ee;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.cat-meta .meta-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.cat-meta .meta-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.muted { color: #64748b; }
+.dot { color: #94a3b8; }
+.spacer { flex: 1; }
+
+/* table */
+.cat-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.cat-table thead th {
+  text-align: left;
+  font-weight: 600;
+  color: #49566a;
+  padding: 10px 12px;
+  border-bottom: 1px solid #eef1f5;
+}
+.cat-table td {
+  padding: 10px 12px;
+  border-top: 1px solid #f3f4f7;
+}
+.cat-table td.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.cat-table td.num { text-align: right; }
+
+.qty .q { font-weight: 600; }
+.qty .unit {
+  margin-left: 2px;
+  font-size: 12px;
+  vertical-align: sub;
+  color: #6b7280;
+}
+
+/* search + toggles */
+.search.small {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #e6e8ef;
+  border-radius: 10px;
+  padding: 6px 8px;
+  background: #fff;
+}
+.search.small input {
+  border: none; outline: none;
+  font-size: 14px;
+  width: 220px;
+}
+.toggle.small {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #334155;
+  font-size: 14px;
+}
+
+/* utilities */
+.btn {
+  border: 1px solid #d9ddea;
+  background: #f8fafc;
+  color: #1f2937;
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.btn.ghost { background: #fff; }
+.btn.primary {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+.btn.tiny { padding: 6px 8px; font-size: 13px; }
+
+.pill {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.pill.ok { background: #dcfce7; color: #166534; }
+.pill.danger { background: #fee2e2; color: #991b1b; }
+.pill.big { padding: 6px 10px; font-size: 13px; }
+
+.dim { color: #6b7280; }
+
+/* ---------- modal styles (fixed width overflow) ---------- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  display: grid;
+  place-items: center;
+  z-index: 50;
+}
+.modal {
+  width: 520px;
+  max-width: 92vw;
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  padding: 16px;
+  box-shadow: 0 10px 30px rgba(2, 6, 23, 0.25);
+  overflow: hidden;               /* keep children inside */
+}
+.modal.mini { width: 420px; }
+.modal.sheet h3, .modal.mini h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 18px;
+  font-weight: 700;
+}
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 8px 0 12px;
+  width: 100%;
+}
+.grid1 { display: grid; gap: 12px; width: 100%; }
+
+/* ensure fields never exceed modal width */
+.modal label input,
+.modal label select,
+.modal label textarea {
+  width: 100% !important;
+  max-width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 14px;
+  outline: none;
+}
+.modal label input:focus,
+.modal label select:focus,
+.modal label textarea:focus { border-color: #2563eb; }
+
+label span {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.flex-right {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+
+.name-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.pill.tiny {
+  font-size: 10px;
+  padding: 2px 6px;
+}
+
+/* Align Qty header and values to the right */
+.cat-table thead th.num {
+  text-align: right;
+  width: 90px; /* keeps Qty column consistent */
+}
+.cat-table td.num {
+  text-align: right;
+}
+
+/* Align number with its unit */
+.cat-table td.num .qty {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+}
+/* header row over the categories list */
+.cat-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 8px 0;
+}
+
+.cat-list-head h3 {
+  margin: 0;
+  font-size: 14px;
+  color: #445;
+}

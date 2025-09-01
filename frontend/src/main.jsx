@@ -1,35 +1,37 @@
+// src/main.jsx
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { RouterProvider, createBrowserRouter } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import Layout from "./components/Layout.jsx";
-import Dashboard from "./pages/Dashboard.jsx";
-import ItemsPage from "./pages/ItemsPage.jsx";
-import LoginPage from "./pages/LoginPage.jsx"; // your placeholder is fine
-import ProductCategoryPage from "./pages/ProductCategoryPage.jsx";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import App from "./App.jsx";
+import LoginPage from "./pages/LoginPage.jsx";
+import { isAuthed } from "./lib/auth.js";
 import "./index.css";
 
-const queryClient = new QueryClient();
-
-const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <Layout />,                 // <-- uses the sidebar + header
-    children: [
-      { index: true, element: <Dashboard /> },
-      { path: "dashboard", element: <Dashboard /> },
-      { path: "items", element: <ItemsPage /> },
-      { path: "product-category", element: <ProductCategoryPage /> },
-    ],
-  },
-  { path: "/login", element: <LoginPage /> },
-  { path: "*", element: <div style={{padding:16}}>Not Found</div> },
-]);
+function RequireAuth({ children }) {
+  const authed = isAuthed();
+  const loc = useLocation();
+  if (!authed) {
+    return <Navigate to="/" replace state={{ from: loc }} />;
+  }
+  return children;
+}
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<LoginPage />} />
+        <Route
+          path="/app"
+          element={
+            <RequireAuth>
+              <App />
+            </RequireAuth>
+          }
+        />
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   </React.StrictMode>
 );

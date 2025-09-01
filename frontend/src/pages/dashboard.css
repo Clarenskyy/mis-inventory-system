@@ -1,78 +1,111 @@
-.dash-wrap{
-  display:grid;
-  gap:16px;
+.dash-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.dash-title{
-  margin: 4px 0 2px;
-  font-size: 32px;
-  line-height: 1.1;
-  font-weight: 800;
-  color: #0f172a;
+.dash-title {
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0;
 }
 
-.card{
-  background: #ffffff;
+.muted {
+  color: #6b7280;
+}
+
+/* Panel that holds the description (left) and clipboard (right) */
+.card {
+  background: #fff;
   border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  padding: 18px;
+  border-radius: 12px;
+  padding: 16px;
 }
 
-.dash-welcome{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:16px;
-  flex-wrap:wrap;
+.intro-panel {
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
 }
 
-.welcome-text{
-  display:grid;
-  gap:6px;
-  min-width: 260px;
+/* Left text area */
+.intro-text {
+  flex: 1;
+  min-width: 0;
 }
-
-.welcome-title{
+.intro-text h2 {
+  margin: 0 0 6px 0;
   font-size: 18px;
   font-weight: 700;
-  color: #0f172a;
+  color: #111827;
+}
+.intro-text p {
+  margin: 0;
+  color: #4b5563;
+  line-height: 1.4;
 }
 
-.welcome-name{
-  color: #059669;
+/* Clipboard on the right */
+.clipboard {
+  width: 220px;              /* “just right size” */
+  flex: 0 0 220px;           /* fixed width on the right */
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f9fafb;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
-.welcome-sub{
-  margin:0;
-  color: #6b7280;
+/* tiny “tab” on top like a clipboard */
+.clipboard::before {
+  content: "";
+  display: block;
+  width: 58px;
+  height: 10px;
+  background: #e5e7eb;
+  border-radius: 0 0 8px 8px;
+  margin: -12px auto 8px;    /* overlap to look like a clip */
+}
+
+.clip-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #374151;
+  font-weight: 600;
+}
+.clip-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+.clip-title {
   font-size: 14px;
 }
 
-.stats{
-  display:flex;
-  align-items:center;
-  gap:12px;
-}
-
-.stat{
-  min-width: 160px;
-  padding: 14px 16px;
-  border:1px solid #e5e7eb;
-  border-radius: 12px;
-  background: #f8fafc;
-  text-align:center;
-}
-
-.stat-label{
-  font-size:12px;
-  color: #6b7280;
-  margin-bottom: 6px;
-  text-transform: uppercase;
-  letter-spacing: .04em;
-}
-
-.stat-value{
-  font-size: 28px;
+.clip-count {
+  text-align: center;
+  font-size: 34px;
   font-weight: 800;
-  color: #0f172a;
+  color: #111827;
+  padding-top: 6px;
 }
+
+/* Responsive: stack when narrow */
+@media (max-width: 720px) {
+  .intro-panel {
+    flex-direction: column;
+  }
+  .clipboard {
+    width: 100%;
+    flex: 0 0 auto;
+  }
+
+}
+.welcome-user {
+  font-size: 18px;   /* bigger font for username */
+  font-weight: 700;  /* bold to emphasize */
+  color: #08b851;    /* darker so it stands out */
+}
+

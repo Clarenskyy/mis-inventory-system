@@ -1,11 +1,14 @@
+// src/pages/Layout.jsx
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
+import { getUser, clearUser } from "../lib/auth.js";
 import "./layout.css";
 
 export default function Layout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const navigate = useNavigate();
+  const user = getUser(); // { name, email } if you stored it at login
 
   useEffect(() => {
     function handleClick(e) {
@@ -18,9 +21,12 @@ export default function Layout() {
   }, []);
 
   function signOut() {
+    // clear auth data
     localStorage.removeItem("token");
+    clearUser(); // removes the stored user profile from auth.js
     setMenuOpen(false);
-    navigate("/login");
+    // hard redirect to login route
+    navigate("/login", { replace: true });
   }
 
   return (
@@ -46,12 +52,13 @@ export default function Layout() {
             <button
               className="avatar"
               onClick={() => setMenuOpen((v) => !v)}
+              title={user?.name || "Account"}
             >
               👤
             </button>
             {menuOpen && (
               <div className="menu">
-                <div className="menu-email">user@email.com</div>
+                <div className="menu-email">{user?.email || "user@email.com"}</div>
                 <button className="menu-item" onClick={signOut}>Sign Out</button>
               </div>
             )}

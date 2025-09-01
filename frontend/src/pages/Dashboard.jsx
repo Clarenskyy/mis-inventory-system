@@ -1,57 +1,43 @@
-import { useEffect, useState } from "react";
-import { api } from "../lib/api.js";
+import { useQuery } from "@tanstack/react-query";
+import { getItems } from "../lib/api.js";
+import { getUser } from "../lib/auth.js";
 import "./dashboard.css";
 
-export default function Dashboard() {
-  const [username, setUsername] = useState("User");
-  const [totalItems, setTotalItems] = useState(0);
-  const [loading, setLoading] = useState(true);
+export default function DashboardPage() {
+  const user = getUser();
+  const firstName = (user?.name || "").split(" ")[0] || "User";
 
-  useEffect(() => {
-    // ✅ Replace this with however you save the username at login
-    const storedName =
-      localStorage.getItem("username") || // adjust to your actual key
-      localStorage.getItem("user_name") ||
-      "User";
-    setUsername(storedName);
+  const { data: items = [] } = useQuery({
+    queryKey: ["items"],
+    queryFn: getItems,
+  });
 
-    // ✅ fetch total inventory items
-    let isMounted = true;
-    api
-      .get("/items")
-      .then((res) => {
-        const data = Array.isArray(res.data) ? res.data : res.data.items ?? [];
-        if (isMounted) setTotalItems(data.length);
-      })
-      .catch(() => {
-        if (isMounted) setTotalItems(0);
-      })
-      .finally(() => isMounted && setLoading(false));
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const totalItems = items.length;
 
   return (
     <section className="dash-wrap">
       <h1 className="dash-title">Dashboard</h1>
-
-      <div className="dash-welcome card">
-        <div className="welcome-text">
-          <div className="welcome-title">
-            Welcome, <span className="welcome-name">{username}</span> to our Storage Inventory.
-          </div>
-          <p className="welcome-sub">
-            Manage items, monitor stock levels, and keep everything organized.
+      <p className="muted">
+        Welcome, <span className="welcome-user">{firstName}</span> to our Storage Inventory.
+      </p>
+      
+      {/* Intro panel with clipboard on the right */}
+      <div className="intro-panel card">
+        <div className="intro-text">
+          <h2>This is MIS Inventory</h2>
+          <p>
+            Manage items, monitor category buffers, and keep stock in check with clear,
+            simple tools.
           </p>
         </div>
 
-        <div className="stats">
-          <div className="stat">
-            <div className="stat-label">Inventory Items</div>
-            <div className="stat-value">{loading ? "…" : totalItems}</div>
+        {/* Clipboard card on the right */}
+        <div className="clipboard">
+          <div className="clip-head">
+            <span className="clip-icon" aria-hidden>📋</span>
+            <span className="clip-title">Inventory Items</span>
           </div>
+          <div className="clip-count">{totalItems}</div>
         </div>
       </div>
     </section>

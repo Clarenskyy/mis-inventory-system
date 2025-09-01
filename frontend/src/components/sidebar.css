@@ -1,0 +1,41 @@
+/* src/components/sidebar.css */
+
+.sidebar {
+  width: 240px;
+  flex: 0 0 240px;
+  border-right: 1px solid #e5e7eb;
+  padding: 1rem;
+  background: #ffffff;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.sidebar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.nav-btn {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  color: #111827;
+  padding: 0.75rem 0.9rem;
+  border-radius: 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.nav-btn:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.nav-btn.active {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
+}
