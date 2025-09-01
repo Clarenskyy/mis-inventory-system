@@ -1,83 +1,66 @@
-/* src/pages/login.css */
+/* Login Page */
 .login-wrap {
-  min-height: 100dvh;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(180deg, #f4f6fb, #eef1f7);
-  padding: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #f9fbff;
 }
 
 .login-card {
-  width: 420px;
-  max-width: 92vw;
+  width: 400px;   /* fixed card width */
   background: #fff;
-  border: 1px solid #e6e9f0;
-  border-radius: 16px;
-  padding: 20px 18px 18px;
-  box-shadow: 0 10px 30px rgba(2, 6, 23, 0.12);
-}
-
-.login-brand {
-  font-weight: 700;
-  color: #0f172a;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-.login-brand .dot {
-  width: 10px; height: 10px;
-  background: #2563eb;
-  border-radius: 999px;
-}
-
-.login-card h1 {
-  margin: 6px 0 12px;
-  font-size: 22px;
-}
-
-.login-form {
-  display: grid;
-  gap: 12px;
-}
-
-.login-form label span {
-  display: block;
-  font-size: 12px;
-  color: #64748b;
-  margin-bottom: 4px;
-}
-
-.login-form input {
-  width: 100%;
+  padding: 24px;
+  border-radius: 12px;
   border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 10px 12px;
-  font-size: 14px;
-  outline: none;
-}
-.login-form input:focus {
-  border-color: #2563eb;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
 }
 
-.btn {
-  border: 1px solid #d9ddea;
-  background: #f8fafc;
-  color: #1f2937;
+.login-card h2 {
+  margin: 0 0 16px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+}
+
+/* Input styling */
+.login-card input {
+  width: 100%;          /* always fit inside the card */
+  max-width: 100%;      /* prevent overflow */
+  box-sizing: border-box;
   padding: 10px 12px;
-  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 14px;
+}
+
+.login-card input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+}
+
+/* Continue button */
+.login-card button {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
   cursor: pointer;
 }
-.btn.primary {
-  background: #2563eb;
-  border-color: #2563eb;
-  color: #fff;
+
+.login-card button:hover {
+  background: #1e40af;
 }
 
-.muted {
-  color: #6b7280;
-}
-.note {
-  margin-top: 10px;
+.login-card p {
+  margin-top: 12px;
   font-size: 12px;
+  color: #6b7280;
+  text-align: center;
 }

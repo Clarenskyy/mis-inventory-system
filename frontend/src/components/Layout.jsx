@@ -21,13 +21,11 @@ export default function Layout() {
   }, []);
 
   function signOut() {
-    // clear auth data
-    localStorage.removeItem("token");
-    clearUser(); // removes the stored user profile from auth.js
-    setMenuOpen(false);
-    // hard redirect to login route
-    navigate("/login", { replace: true });
-  }
+  localStorage.removeItem("token"); // optional if you also store token
+  clearUser();                      // wipe the saved user
+  setMenuOpen(false);
+  navigate("/login", { replace: true });
+}
 
   return (
     <div className="app-root">

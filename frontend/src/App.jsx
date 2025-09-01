@@ -1,10 +1,10 @@
 // src/App.jsx
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import DashboardPage from "./pages/DashboardPage.jsx";
+import DashboardPage from "./pages/Dashboard.jsx";
 import ItemsPage from "./pages/ItemsPage.jsx";
 import ProductCategoryPage from "./pages/ProductCategoryPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
-import Layout from "./pages/Layout.jsx"; // sidebar + topbar
+import Layout from "./components/Layout.jsx"; // sidebar + topbar
 
 export default function App() {
   return (
