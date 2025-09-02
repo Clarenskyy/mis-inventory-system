@@ -1,5 +1,5 @@
 # app/models.py
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, func, Text, Index
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, func, Text, Index, Boolean
 from sqlalchemy.orm import relationship
 from app.database import Base
 
@@ -29,19 +29,26 @@ class Item(Base):
     transactions = relationship("Transaction", back_populates="item", cascade="all, delete-orphan")
 
 
+# ... (Category, Item, Transaction unchanged) ...
+
 class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(64), unique=True, index=True, nullable=False)  # NEW
+    password_hash = Column(String(255), nullable=False)                     # NEW
+
     name = Column(String(120), nullable=False)
-    email = Column(String(255), unique=True, index=True, nullable=False)
+    email = Column(String(255), unique=True, index=True, nullable=True)     # optional now
     role = Column(String(32), nullable=False, default="staff")
+    is_admin = Column(Boolean, nullable=False, default=False)               # NEW
+
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     transactions = relationship("Transaction", back_populates="user")
 
     def __repr__(self):
-        return f"<User id={self.id} email={self.email} role={self.role}>"
+        return f"<User id={self.id} username={self.username} role={self.role} admin={self.is_admin}>"
 
 class Transaction(Base):
     __tablename__ = "transactions"
