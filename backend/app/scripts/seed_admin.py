@@ -13,7 +13,7 @@ def run() -> None:
     password = os.getenv("ADMIN_PASSWORD", "Admin123!")
     name     = os.getenv("ADMIN_NAME", "System Admin")
     role     = os.getenv("ADMIN_ROLE", "admin")
-    email    = os.getenv("ADMIN_EMAIL")
+    email    = os.getenv("ADMIN_EMAIL", f"{username}@nidec.local")  # <- ensure NOT NULL satisfied"
 
     db: Session = SessionLocal()
     try:
