@@ -1,14 +1,14 @@
-// src/pages/Layout.jsx
+// src/components/Layout.jsx
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
-import { getUser, clearUser } from "../lib/auth.js";
+import { getUser, clearAuth } from "../lib/auth.js";
 import "./layout.css";
 
 export default function Layout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const navigate = useNavigate();
-  const user = getUser(); // { name, email } if you stored it at login
+  const user = getUser(); // { name, email, username } if stored at login
 
   useEffect(() => {
     function handleClick(e) {
@@ -21,11 +21,10 @@ export default function Layout() {
   }, []);
 
   function signOut() {
-  localStorage.removeItem("token"); // optional if you also store token
-  clearUser();                      // wipe the saved user
-  setMenuOpen(false);
-  navigate("/login", { replace: true });
-}
+    clearAuth();            // remove token + user
+    setMenuOpen(false);
+    navigate("/login", { replace: true });
+  }
 
   return (
     <div className="app-root">
@@ -34,7 +33,7 @@ export default function Layout() {
         <nav className="nav">
           <NavItem to="/dashboard" label="Dashboard" icon="📊" />
           <NavItem to="/items" label="Items" icon="📦" />
-          <NavItem to="/product-category" label="Product Category" icon="🗂️" />
+          <NavItem to="/categories" label="Product Category" icon="🗂️" />
         </nav>
       </aside>
 
@@ -50,14 +49,18 @@ export default function Layout() {
             <button
               className="avatar"
               onClick={() => setMenuOpen((v) => !v)}
-              title={user?.name || "Account"}
+              title={user?.name || user?.username || "Account"}
             >
               👤
             </button>
             {menuOpen && (
               <div className="menu">
-                <div className="menu-email">{user?.email || "user@email.com"}</div>
-                <button className="menu-item" onClick={signOut}>Sign Out</button>
+                <div className="menu-email">
+                  {user?.email || user?.username || "user"}
+                </div>
+                <button className="menu-item" onClick={signOut}>
+                  Sign Out
+                </button>
               </div>
             )}
           </div>

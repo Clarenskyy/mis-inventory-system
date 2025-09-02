@@ -1,51 +1,63 @@
+// src/pages/LoginPage.jsx
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { setUser } from "../lib/auth.js";
+import { useNavigate, useLocation } from "react-router-dom";
+import { login, getMe, setAccessToken } from "../lib/api.js";
+import { setToken, saveUser } from "../lib/auth.js";
 import "./login.css";
 
-export default function Login() {
-  const nav = useNavigate();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+export default function LoginPage() {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [err, setErr] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const loc = useLocation();
 
-  function onSubmit(e) {
+  async function onSubmit(e) {
     e.preventDefault();
-    const trimmed = name.trim();
-    if (!trimmed) return;
-
-    // Save user in localStorage using your auth.js
-    setUser({ name: trimmed, email: email.trim() || null });
-
-    // Go to the interface
-    nav("/dashboard", { replace: true });
+    setErr("");
+    setLoading(true);
+    try {
+      const { access_token } = await login(username, password);
+      setToken(access_token);
+      setAccessToken(access_token);
+      const me = await getMe();
+      saveUser(me);
+      const dest = loc.state?.from?.pathname || "/dashboard";
+      navigate(dest, { replace: true });
+    } catch (e) {
+      setErr(e?.response?.data?.detail || "Login failed");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <div className="login-wrap">
       <form className="login-card" onSubmit={onSubmit}>
-        <h2>Sign in</h2>
+        <h1 className="login-title">Sign in</h1>
 
-        <label>
-          <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>Name</div>
-          <input
-            placeholder="e.g., Juan Dela Cruz"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </label>
+        {err && <div className="login-error">{err}</div>}
 
-        <label>
-          <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>Email (optional)</div>
-          <input
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </label>
+        <label className="login-label">Username</label>
+        <input
+          className="login-input"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          autoFocus
+        />
 
-        <button type="submit">Continue</button>
+        <label className="login-label">Password</label>
+        <input
+          className="login-input"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
 
-        <p>This demo login is frontend-only. You can wire it to your backend later.</p>
+        <button className="login-btn" disabled={loading}>
+          {loading ? "Signing in..." : "Sign in"}
+        </button>
       </form>
     </div>
   );

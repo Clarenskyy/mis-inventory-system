@@ -1,3 +1,4 @@
+// src/pages/Dashboard.jsx
 import { useQuery } from "@tanstack/react-query";
 import { getItems } from "../lib/api.js";
 import { getUser } from "../lib/auth.js";
@@ -5,14 +6,14 @@ import "./dashboard.css";
 
 export default function DashboardPage() {
   const user = getUser();
-  const firstName = (user?.name || "").split(" ")[0] || "User";
+  const firstName = (user?.name || user?.username || "").split(" ")[0] || "User";
 
-  const { data: items = [] } = useQuery({
+  const { data: items } = useQuery({
     queryKey: ["items"],
-    queryFn: getItems,
+    queryFn: () => getItems(),
   });
 
-  const totalItems = items.length;
+  const totalItems = Array.isArray(items) ? items.length : 0;
 
   return (
     <section className="dash-wrap">
@@ -20,8 +21,7 @@ export default function DashboardPage() {
       <p className="muted">
         Welcome, <span className="welcome-user">{firstName}</span> to our Storage Inventory.
       </p>
-      
-      {/* Intro panel with clipboard on the right */}
+
       <div className="intro-panel card">
         <div className="intro-text">
           <h2>This is MIS Inventory</h2>
@@ -31,7 +31,6 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* Clipboard card on the right */}
         <div className="clipboard">
           <div className="clip-head">
             <span className="clip-icon" aria-hidden>📋</span>
