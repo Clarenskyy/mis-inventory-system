@@ -102,3 +102,19 @@ class TransactionResponse(TransactionBase):
     id: int
     created_at: Optional[datetime] = None
     model_config = ConfigDict(from_attributes=True)
+
+class AdminUserCreate(BaseModel):
+    username: str
+    password: str
+    name: str
+    email: EmailStr | None = None
+    role: str | None = "staff"
+    is_admin: bool = False
+    model_config = ConfigDict(from_attributes=True)
+
+class AdminUserUpdate(BaseModel):
+    name: str | None = None
+    email: EmailStr | None = None
+    role: str | None = None
+    is_admin: bool | None = None
+    password: str | None = None
