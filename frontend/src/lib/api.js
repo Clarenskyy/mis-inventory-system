@@ -2,21 +2,26 @@
 import axios from "axios";
 import { getToken, clearAuth } from "./auth.js";
 
-// Adjust to your backend origin if different
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE || "http://localhost:8000",
 });
 
-// attach token
-export function setAccessToken(token) {
-  api.defaults.headers.common.Authorization = token ? `Bearer ${token}` : undefined;
+// ---- attach token on startup
+const existing = getToken();
+if (existing) {
+  api.defaults.headers.common.Authorization = `Bearer ${existing}`;
 }
 
-// keep header in sync on refresh
-const existing = getToken();
-if (existing) setAccessToken(existing);
+// expose a helper so login can update axios header immediately
+export function setAccessToken(token) {
+  if (token) {
+    api.defaults.headers.common.Authorization = `Bearer ${token}`;
+  } else {
+    delete api.defaults.headers.common.Authorization;
+  }
+}
 
-// 401 -> force login
+// 401 -> force re-login
 api.interceptors.response.use(
   (res) => res,
   (err) => {
@@ -31,11 +36,13 @@ api.interceptors.response.use(
 // --- Auth endpoints ---
 export async function login(username, password) {
   const { data } = await api.post("/auth/login", { username, password });
-  return data; // { access_token, token_type }
+  // data = { access_token, token_type }
+  return data;
 }
+
 export async function getMe() {
   const { data } = await api.get("/auth/me");
-  return data; // { id, username, name, email, role, is_admin, created_at }
+  return data;
 }
 
 // --- Items / Categories ---
@@ -49,12 +56,12 @@ export async function getCategories({ q = "", limit = 50, offset = 0 } = {}) {
 }
 
 // ---------- Items ----------
-export async function createItem(data) {
-  const r = await api.post("/items", data);
+export async function createItem(payload) {
+  const r = await api.post("/items", payload);
   return r.data;
 }
-export async function updateItem(id, data) {
-  const r = await api.put(`/items/${id}`, data);
+export async function updateItem(id, payload) {
+  const r = await api.patch(`/items/${id}`, payload);
   return r.data;
 }
 export async function deleteItem(id) {
@@ -66,14 +73,31 @@ export async function adjustItem(id, change, note = "") {
 }
 
 // ---------- Categories ----------
-export async function createCategory(data) {
-  const r = await api.post("/categories", data);
+export async function createCategory(payload) {
+  const r = await api.post("/categories", payload);
   return r.data;
 }
-export async function updateCategory(id, data) {
-  const r = await api.patch(`/categories/${id}`, data);
+export async function updateCategory(id, payload) {
+  const r = await api.patch(`/categories/${id}`, payload);
   return r.data;
 }
 
+// --- Admin Users API ---
+export async function adminListUsers() {
+  const res = await api.get("/admin/users");
+  return res.data;
+}
+export async function adminCreateUser(payload) {
+  const res = await api.post("/admin/users", payload);
+  return res.data;
+}
+export async function adminUpdateUser(id, payload) {
+  const res = await api.patch(`/admin/users/${id}`, payload);
+  return res.data;
+}
+export async function adminDeleteUser(id) {
+  await api.delete(`/admin/users/${id}`);
+  return true;
+}
 
 export default api;

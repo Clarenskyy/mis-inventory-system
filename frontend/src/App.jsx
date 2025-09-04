@@ -6,12 +6,12 @@ import ProductCategoryPage from "./pages/ProductCategoryPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import Layout from "./components/Layout.jsx";
 import Protected from "./components/Protected.jsx";
+import AdminUsersPage from "./pages/AdminUsersPage.jsx";
+import ProtectedAdmin from "./components/ProtectedAdmin.jsx";
 import { getToken } from "./lib/auth.js";
-import { setAccessToken } from "./lib/api.js";
 
 // restore token on reload
 const token = getToken();
-if (token) setAccessToken(token);
 
 export default function App() {
   return (
@@ -19,7 +19,7 @@ export default function App() {
       {/* Public */}
       <Route path="/login" element={<LoginPage />} />
 
-      {/* Protected branch */}
+      {/* Protected branch (everything inside uses the Layout shell) */}
       <Route
         path="/"
         element={
@@ -28,14 +28,24 @@ export default function App() {
           </Protected>
         }
       >
-        <Route index element={<Navigate to="/dashboard" replace />} />
+        <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="items" element={<ItemsPage />} />
         <Route path="categories" element={<ProductCategoryPage />} />
+
+        {/* Admin-only page */}
+        <Route
+          path="admin-users"
+          element={
+            <ProtectedAdmin>
+              <AdminUsersPage />
+            </ProtectedAdmin>
+          }
+        />
       </Route>
 
       {/* Fallback */}
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }

@@ -1,5 +1,5 @@
 // src/components/Layout.jsx
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { getUser, clearAuth } from "../lib/auth.js";
 import "./layout.css";
@@ -8,8 +8,10 @@ export default function Layout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const navigate = useNavigate();
-  const user = getUser(); // { name, email, username } if stored at login
+  const location = useLocation();
+  const user = getUser(); // { name, email, username, is_admin }
 
+  // Close the profile menu when clicking outside
   useEffect(() => {
     function handleClick(e) {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -20,8 +22,13 @@ export default function Layout() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
+  // Also close the profile menu when the route changes
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
+
   function signOut() {
-    clearAuth();            // remove token + user
+    clearAuth(); // remove token + user
     setMenuOpen(false);
     navigate("/login", { replace: true });
   }
@@ -34,6 +41,11 @@ export default function Layout() {
           <NavItem to="/dashboard" label="Dashboard" icon="📊" />
           <NavItem to="/items" label="Items" icon="📦" />
           <NavItem to="/categories" label="Product Category" icon="🗂️" />
+
+          {/* Admin-only */}
+          {user?.is_admin && (
+            <NavItem to="/admin/users" label="Users (Admin)" icon="🛡️" />
+          )}
         </nav>
       </aside>
 
@@ -85,3 +97,4 @@ function NavItem({ to, label, icon }) {
     </NavLink>
   );
 }
+
