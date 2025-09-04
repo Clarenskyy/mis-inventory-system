@@ -12,3 +12,4 @@ Thumbs.db
 # Accidental files in your repo
 .venvScriptsactivate
 cd
+backend/app/__pycache__/
