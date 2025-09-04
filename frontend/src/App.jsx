@@ -8,10 +8,6 @@ import Layout from "./components/Layout.jsx";
 import Protected from "./components/Protected.jsx";
 import AdminUsersPage from "./pages/AdminUsersPage.jsx";
 import ProtectedAdmin from "./components/ProtectedAdmin.jsx";
-import { getToken } from "./lib/auth.js";
-
-// restore token on reload
-const token = getToken();
 
 export default function App() {
   return (
@@ -19,29 +15,23 @@ export default function App() {
       {/* Public */}
       <Route path="/login" element={<LoginPage />} />
 
-      {/* Protected branch (everything inside uses the Layout shell) */}
-      <Route
-        path="/"
-        element={
-          <Protected>
-            <Layout />
-          </Protected>
-        }
-      >
-        <Route index element={<Navigate to="dashboard" replace />} />
-        <Route path="dashboard" element={<DashboardPage />} />
-        <Route path="items" element={<ItemsPage />} />
-        <Route path="categories" element={<ProductCategoryPage />} />
-
-        {/* Admin-only page */}
-        <Route
-          path="admin-users"
-          element={
-            <ProtectedAdmin>
-              <AdminUsersPage />
-            </ProtectedAdmin>
-          }
-        />
+      {/* Protected branch */}
+      <Route path="/" element={<Protected />}>
+        {/* Layout shell (sidebar/topbar) */}
+        <Route element={<Layout />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="items" element={<ItemsPage />} />
+          <Route path="categories" element={<ProductCategoryPage />} />
+          <Route
+            path="admin-users"
+            element={
+              <ProtectedAdmin>
+                <AdminUsersPage />
+              </ProtectedAdmin>
+            }
+          />
+        </Route>
       </Route>
 
       {/* Fallback */}
