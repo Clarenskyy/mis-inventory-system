@@ -2,7 +2,9 @@
 from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field, EmailStr
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Annotated
+from app.deps import get_current_user, require_admin as require_admin
+
 
 
 # ---------- Category ----------

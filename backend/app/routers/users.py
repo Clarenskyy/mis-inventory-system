@@ -4,7 +4,8 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app import models, schemas
 from app.security import hash_password
-from app.deps import admin_required
+from app.deps import require_admin as admin_required, get_current_user, CurrentUser, AdminUser
+
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -59,3 +60,12 @@ def delete_user(user_id: int, db: Session = Depends(get_db), admin=Depends(admin
     db.delete(user)
     db.commit()
     return None
+
+@router.get("/me")
+def me(user: CurrentUser):
+    return user
+
+@router.get("/users", response_model=list[schemas.UserResponse])
+def list_users(user: AdminUser, db: Session = Depends(get_db)):
+    return db.query(models.User).all()
+
