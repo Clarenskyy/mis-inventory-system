@@ -2,9 +2,8 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { login, getMe, setAccessToken } from "../lib/api.js";
-import { setAuth } from "../lib/auth.js";
+import { setAuth } from "../lib/auth.js";   // ← use unified helper
 import "./login.css";
-import { saveToken, saveUser } from "../lib/auth";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -14,21 +13,30 @@ export default function LoginPage() {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const from = location.state?.from?.pathname || "/dashboard";
 
   async function handleSubmit(e) {
     e.preventDefault();
     setErr("");
+    setLoading(true);
     try {
       const { access_token } = await login(username, password);
-      saveToken(access_token);
-      setAccessToken(access_token);          // keep axios header in sync
-      const me = await getMe();              // fetch user once
-      saveUser(me);                          // cache for guards
+
+      // 1) set axios header immediately
+      setAccessToken(access_token);
+
+      // 2) fetch current user
+      const me = await getMe();
+
+      // 3) persist token + user with ONE API
+      setAuth(access_token, me);
+
+      // 4) send user to intended page (or dashboard)
       const dest = location.state?.from?.pathname || "/dashboard";
       navigate(dest, { replace: true });
-    } catch (err) {
+    } catch (e) {
       setErr("Login failed");
+    } finally {
+      setLoading(false);
     }
   }
 

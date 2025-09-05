@@ -44,8 +44,8 @@ export default function Layout() {
 
           {/* Admin-only */}
           {user?.is_admin && (
-            <NavItem to="/admin/users" label="Users (Admin)" icon="🛡️" />
-          )}
+          <NavItem to="/admin-users" label="Users (Admin)" icon="🛡️" />
+      )}
         </nav>
       </aside>
 

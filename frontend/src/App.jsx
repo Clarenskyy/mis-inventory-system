@@ -15,9 +15,9 @@ export default function App() {
       {/* Public */}
       <Route path="/login" element={<LoginPage />} />
 
-      {/* Protected branch */}
-      <Route path="/" element={<Protected />}>
-        {/* Layout shell (sidebar/topbar) */}
+      {/* Protected wrapper */}
+      <Route element={<Protected />}>
+        {/* App shell (sidebar/topbar) */}
         <Route element={<Layout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
