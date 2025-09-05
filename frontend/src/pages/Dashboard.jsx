@@ -19,15 +19,15 @@ export default function DashboardPage() {
     <section className="dash-wrap">
       <h1 className="dash-title">Dashboard</h1>
       <p className="muted">
-        Welcome, <span className="welcome-user">{firstName}</span> to our Storage Inventory.
+        Welcome <span className="welcome-user">{firstName}</span> ,to our Storage Inventory.
       </p>
 
       <div className="intro-panel card">
         <div className="intro-text">
           <h2>This is MIS Inventory</h2>
           <p>
-            Manage items, monitor category buffers, and keep stock in check with clear,
-            simple tools.
+            Manage Items, Monitor Category Buffers, and Keep Stock in Check with Clear,
+            Simple Tools.
           </p>
         </div>
 
