@@ -1,14 +1,19 @@
 // src/pages/AdminUsersPage.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-// at the top of AdminUsersPage.jsx
 import {
+  // Users admin APIs
   adminListUsers,
   adminCreateUser,
   adminUpdateUser,
   adminDeleteUser,
-} from "../lib/api.js";   // ← not "/src/lib/api.js"
-import "./users.css"; // optional (create or ignore)
+  // Recipients admin APIs
+  listRecipients,
+  createRecipient,
+  setRecipientActive,
+  deleteRecipient,
+} from "../lib/api.js";
+import "./users.css"; // optional
 
 const emptyForm = {
   username: "",
@@ -20,6 +25,18 @@ const emptyForm = {
 };
 
 export default function AdminUsersPage() {
+  return (
+    <section className="page-wrap">
+      <h1 className="page-title">Admin</h1>
+      <UsersAdminCard />
+      <RecipientsAdminCard />
+    </section>
+  );
+}
+
+/* -------------------- Users Admin -------------------- */
+
+function UsersAdminCard() {
   const qc = useQueryClient();
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
@@ -54,7 +71,7 @@ export default function AdminUsersPage() {
   function startEdit(u) {
     setEditingId(u.id);
     setForm({
-      username: u.username, // read-only in UI; backend doesn't require it for PATCH
+      username: u.username, // read-only in UI for edit
       password: "",
       name: u.name || "",
       email: u.email || "",
@@ -62,6 +79,7 @@ export default function AdminUsersPage() {
       is_admin: !!u.is_admin,
     });
   }
+
   function cancelEdit() {
     setEditingId(null);
     setForm(emptyForm);
@@ -97,117 +115,113 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <section className="page-wrap">
-      <h1 className="page-title">Admin · Users</h1>
+    <div className="card" style={{ marginBottom: 16 }}>
+      <h2 style={{ marginTop: 0 }}>Users</h2>
 
       {/* Form */}
-      <div className="card" style={{ marginBottom: 16 }}>
-        <form onSubmit={onSubmit} className="form-grid">
-          {!editingId && (
-            <>
-              <label>
-                Username
-                <input
-                  name="username"
-                  value={form.username}
-                  onChange={onChange}
-                  required
-                />
-              </label>
-            </>
-          )}
-
+      <form onSubmit={onSubmit} className="form-grid">
+        {!editingId && (
           <label>
-            Name
+            Username
             <input
-              name="name"
-              value={form.name}
+              name="username"
+              value={form.username}
               onChange={onChange}
               required
             />
           </label>
+        )}
 
-          <label>
-            Email (optional)
+        <label>
+          Name
+          <input
+            name="name"
+            value={form.name}
+            onChange={onChange}
+            required
+          />
+        </label>
+
+        <label>
+          Email (optional)
+          <input
+            type="email"
+            name="email"
+            value={form.email}
+            onChange={onChange}
+            placeholder="user@example.com"
+          />
+        </label>
+
+        <label>
+          Role
+          <select name="role" value={form.role} onChange={onChange}>
+            <option value="staff">staff</option>
+            <option value="manager">manager</option>
+            <option value="admin">admin</option>
+          </select>
+        </label>
+
+        <label className="row">
+          <input
+            type="checkbox"
+            name="is_admin"
+            checked={form.is_admin}
+            onChange={onChange}
+          />
+          <span>Is Admin</span>
+        </label>
+
+        <label>
+          {editingId ? "New Password (optional)" : "Password"}
+          <div className="pwd-row">
             <input
-              type="email"
-              name="email"
-              value={form.email}
+              type={showPwd ? "text" : "password"}
+              name="password"
+              value={form.password}
               onChange={onChange}
-              placeholder="user@example.com"
+              {...(editingId ? {} : { required: true })}
+              minLength={6}
             />
-          </label>
-
-          <label>
-            Role
-            <select name="role" value={form.role} onChange={onChange}>
-              <option value="staff">staff</option>
-              <option value="manager">manager</option>
-              <option value="admin">admin</option>
-            </select>
-          </label>
-
-          <label className="row">
-            <input
-              type="checkbox"
-              name="is_admin"
-              checked={form.is_admin}
-              onChange={onChange}
-            />
-            <span>Is Admin</span>
-          </label>
-
-          <label>
-            {editingId ? "New Password (optional)" : "Password"}
-            <div className="pwd-row">
-              <input
-                type={showPwd ? "text" : "password"}
-                name="password"
-                value={form.password}
-                onChange={onChange}
-                {...(editingId ? {} : { required: true })}
-                minLength={6}
-              />
-              <button
-                type="button"
-                className="btn ghost"
-                onClick={() => setShowPwd((v) => !v)}
-              >
-                {showPwd ? "Hide" : "Show"}
-              </button>
-            </div>
-          </label>
-
-          <div className="row right">
-            {editingId && (
-              <button type="button" className="btn ghost" onClick={cancelEdit}>
-                Cancel
-              </button>
-            )}
             <button
-              className="btn"
-              type="submit"
-              disabled={createMut.isPending || updateMut.isPending}
+              type="button"
+              className="btn ghost"
+              onClick={() => setShowPwd((v) => !v)}
             >
-              {editingId ? "Save Changes" : "Create User"}
+              {showPwd ? "Hide" : "Show"}
             </button>
           </div>
+        </label>
 
-          {(createMut.isError || updateMut.isError) && (
-            <div className="error">
-              {createMut.error?.response?.data?.detail ||
-                updateMut.error?.response?.data?.detail ||
-                "Something went wrong"}
-            </div>
+        <div className="row right">
+          {editingId && (
+            <button type="button" className="btn ghost" onClick={cancelEdit}>
+              Cancel
+            </button>
           )}
-          {(createMut.isSuccess || updateMut.isSuccess) && (
-            <div className="ok">Saved.</div>
-          )}
-        </form>
-      </div>
+          <button
+            className="btn"
+            type="submit"
+            disabled={createMut.isPending || updateMut.isPending}
+          >
+            {editingId ? "Save Changes" : "Create User"}
+          </button>
+        </div>
+
+        {(createMut.isError || updateMut.isError) && (
+          <div className="error">
+            {createMut.error?.response?.data?.detail ||
+              updateMut.error?.response?.data?.detail ||
+              "Something went wrong"}
+          </div>
+        )}
+        {(createMut.isSuccess || updateMut.isSuccess) && (
+          <div className="ok">Saved.</div>
+        )}
+      </form>
 
       {/* Table */}
-      <div className="card">
+      <div style={{ marginTop: 16 }}>
         {isLoading ? (
           <div>Loading users…</div>
         ) : isError ? (
@@ -257,6 +271,103 @@ export default function AdminUsersPage() {
           </table>
         )}
       </div>
-    </section>
+    </div>
+  );
+}
+
+/* -------------------- Recipients Admin -------------------- */
+
+function RecipientsAdminCard() {
+  const [items, setItems] = useState([]);
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
+
+  async function refresh() {
+    const data = await listRecipients();
+    setItems(data);
+  }
+
+  useEffect(() => { refresh(); }, []);
+
+  async function add(e) {
+    e.preventDefault();
+    setError("");
+    try {
+      await createRecipient(email);
+      setEmail("");
+      await refresh();
+    } catch (err) {
+      setError(err?.response?.data?.detail || "Failed to add");
+    }
+  }
+
+  return (
+    <div className="card">
+      <h2 style={{ marginTop: 0 }}>Email Recipients (Alerts)</h2>
+
+      <form onSubmit={add} style={{ display: "flex", gap: 8, margin: "8px 0 16px" }}>
+        <input
+          type="email"
+          placeholder="someone@example.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <button type="submit">Add</button>
+      </form>
+      {error && <div className="error">{error}</div>}
+
+      <table className="tbl">
+        <thead>
+          <tr>
+            <th style={{textAlign:"left"}}>Email</th>
+            <th>Status</th>
+            <th style={{width: 120}} />
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((r) => (
+            <tr key={r.id}>
+              <td>{r.email}</td>
+              <td>
+                <label style={{display:"inline-flex",alignItems:"center",gap:6}}>
+                  <input
+                    type="checkbox"
+                    checked={r.active}
+                    onChange={async (e) => {
+                      await setRecipientActive(r.id, e.target.checked);
+                      await refresh();
+                    }}
+                  />
+                  {r.active ? "Active" : "Muted"}
+                </label>
+              </td>
+              <td style={{ textAlign: "right" }}>
+                <button
+                  className="btn danger small"
+                  onClick={async () => {
+                    if (window.confirm("Delete this recipient?")) {
+                      await deleteRecipient(r.id);
+                      await refresh();
+                    }
+                  }}
+                >
+                  Delete
+                </button>
+              </td>
+            </tr>
+          ))}
+          {items.length === 0 && (
+            <tr>
+              <td colSpan={3} style={{ color: "#6b7280" }}>No recipients yet.</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+
+      <p style={{color:"#6b7280", marginTop:8}}>
+        Notes: active recipients are merged with your <code>EMAIL_TO_DEFAULT</code> list.
+      </p>
+    </div>
   );
 }

@@ -120,3 +120,18 @@ class AdminUserUpdate(BaseModel):
     role: str | None = None
     is_admin: bool | None = None
     password: str | None = None
+
+class RecipientBase(BaseModel):
+    email: EmailStr
+    active: bool = True
+
+class RecipientCreate(BaseModel):
+    email: EmailStr
+
+class RecipientUpdate(BaseModel):
+    active: bool | None = None
+
+class RecipientResponse(RecipientBase):
+    id: int
+    created_at: datetime | None = None
+    model_config = {"from_attributes": True}

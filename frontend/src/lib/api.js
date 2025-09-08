@@ -100,4 +100,22 @@ export async function adminDeleteUser(id) {
   return true;
 }
 
+// src/lib/api.js
+export async function listRecipients() {
+  const { data } = await api.get("/admin/recipients");
+  return data;
+}
+export async function createRecipient(email) {
+  const { data } = await api.post("/admin/recipients", { email });
+  return data;
+}
+export async function setRecipientActive(id, active) {
+  const { data } = await api.patch(`/admin/recipients/${id}`, { active });
+  return data;
+}
+export async function deleteRecipient(id) {
+  await api.delete(`/admin/recipients/${id}`);
+}
+
+
 export default api;

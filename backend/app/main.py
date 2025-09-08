@@ -5,6 +5,8 @@ from app import models
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import auth, users
 from app.routers import admin_users
+from app.routers import admin_recipients
+
 
 
 # Creates Table
@@ -29,6 +31,7 @@ app.include_router(categories.router, prefix="/categories", tags=["Categories"])
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(admin_users.router)
+app.include_router(admin_recipients.router)
 
 
 @app.get("/")

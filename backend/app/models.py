@@ -66,3 +66,10 @@ class Transaction(Base):
 
     def __repr__(self):
         return f"<Transaction id={self.id} item_id={self.item_id} delta={self.qty_change}>"
+
+class EmailRecipient(Base):
+    __tablename__ = "email_recipients"
+    id = Column(Integer, primary_key=True)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
