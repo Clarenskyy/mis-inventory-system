@@ -38,35 +38,55 @@ def update_user(
     user_id: int,
     payload: schemas.AdminUserUpdate,
     db: Session = Depends(get_db),
-    admin = Depends(admin_required),
+    admin: models.User = Depends(admin_required),
 ):
     user = db.get(models.User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Optional: prevent removing your own admin flag
+    # prevent removing your own admin flag
     if user.id == admin.id and payload.is_admin is False:
         raise HTTPException(status_code=400, detail="You cannot remove your own admin rights")
 
+    # --- NEW: username change + uniqueness check ---
+    if payload.username is not None and payload.username != user.username:
+        exists = (
+            db.query(models.User)
+              .filter(models.User.username == payload.username, models.User.id != user.id)
+              .first()
+        )
+        if exists:
+            raise HTTPException(status_code=409, detail="Username already exists")
+        user.username = payload.username
+
+    # name
     if payload.name is not None:
         user.name = payload.name
+
+    # email (allow clearing to None; enforce uniqueness if set)
     if payload.email is not None:
-        # Check email uniqueness if changing it
         if payload.email and db.query(models.User).filter(
             models.User.email == payload.email, models.User.id != user.id
         ).first():
             raise HTTPException(status_code=409, detail="Email already exists")
-        user.email = payload.email
+        user.email = payload.email or None
+
+    # role
     if payload.role is not None:
         user.role = payload.role
+
+    # admin flag
     if payload.is_admin is not None:
         user.is_admin = payload.is_admin
+
+    # password
     if payload.password:
         user.password_hash = hash_password(payload.password)
 
     db.commit()
     db.refresh(user)
     return user
+
 
 @router.delete("/{user_id}", status_code=204)
 def delete_user(

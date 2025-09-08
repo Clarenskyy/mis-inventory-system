@@ -115,11 +115,13 @@ class AdminUserCreate(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class AdminUserUpdate(BaseModel):
+    username: str | None = Field(default=None, min_length=2, max_length=64)
     name: str | None = None
     email: EmailStr | None = None
     role: str | None = None
     is_admin: bool | None = None
-    password: str | None = None
+    password: str | None = Field(default=None, min_length=6, max_length=128)
+
 
 class RecipientBase(BaseModel):
     email: EmailStr
