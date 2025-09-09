@@ -81,6 +81,10 @@ export async function updateCategory(id, payload) {
   const r = await api.patch(`/categories/${id}`, payload);
   return r.data;
 }
+export async function deleteCategory(id) {
+  await api.delete(`/categories/${id}`);
+}
+
 
 // --- Admin Users API ---
 export async function adminListUsers() {

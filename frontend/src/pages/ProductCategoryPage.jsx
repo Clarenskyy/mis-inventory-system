@@ -1,3 +1,4 @@
+// src/pages/ProductCategoryPage.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -5,17 +6,15 @@ import {
   getCategories,
   updateCategory,
   createCategory,
+  deleteCategory,
 } from "../lib/api.js";
 import "./product-category.css";
 
 /* ---------- unit helpers (same as Items page) ---------- */
 const UNIT_STORE_KEY = "mis.units.v1";
 function loadUnitMap() {
-  try {
-    return JSON.parse(localStorage.getItem(UNIT_STORE_KEY) || "{}");
-  } catch {
-    return {};
-  }
+  try { return JSON.parse(localStorage.getItem(UNIT_STORE_KEY) || "{}"); }
+  catch { return {}; }
 }
 function getUnit(id) {
   const m = loadUnitMap();
@@ -41,7 +40,8 @@ export default function ProductCategoryPage() {
 
   // modals
   const [showAdd, setShowAdd] = useState(false);
-  const [showEditBuf, setShowEditBuf] = useState(false);
+  const [showEditCat, setShowEditCat] = useState(false);  // <-- renamed
+  const [showConfirmDel, setShowConfirmDel] = useState(false);
 
   /* ---------- totals per category (cid -> total qty) ---------- */
   const totalsByCategory = useMemo(() => {
@@ -87,7 +87,7 @@ export default function ProductCategoryPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["categories"] });
       qc.invalidateQueries({ queryKey: ["items"] });
-      setShowEditBuf(false);
+      setShowEditCat(false);
     },
   });
 
@@ -97,6 +97,16 @@ export default function ProductCategoryPage() {
       qc.invalidateQueries({ queryKey: ["categories"] });
       if (created?.id) setActiveId(created.id);
       setShowAdd(false);
+    },
+  });
+
+  const mDelete = useMutation({
+    mutationFn: (id) => deleteCategory(id),
+    onSuccess: () => {
+      setShowConfirmDel(false);
+      setActiveId(null);
+      qc.invalidateQueries({ queryKey: ["categories"] });
+      qc.invalidateQueries({ queryKey: ["items"] });
     },
   });
 
@@ -124,6 +134,8 @@ export default function ProductCategoryPage() {
       .filter((it) => Number(it.category_id) === Number(activeCat.id))
       .reduce((sum, it) => sum + Number(it.quantity ?? 0), 0);
   }, [items, activeCat]);
+
+  const canDeleteActive = !!activeCat && totalQtyInCat === 0;
 
   return (
     <section className="cat-wrap">
@@ -208,11 +220,24 @@ export default function ProductCategoryPage() {
                     <button
                       className="btn tiny"
                       style={{ marginLeft: 8 }}
-                      onClick={() => setShowEditBuf(true)}
+                      onClick={() => setShowEditCat(true)}
                       disabled={mUpdate.isPending}
-                      title="Edit buffer"
+                      title="Edit category"
                     >
                       ✎ Edit
+                    </button>
+                    <button
+                      className="btn tiny danger"
+                      style={{ marginLeft: 8 }}
+                      onClick={() => setShowConfirmDel(true)}
+                      disabled={!canDeleteActive || mDelete.isPending}
+                      title={
+                        canDeleteActive
+                          ? "Delete this category"
+                          : "Cannot delete while it still has items"
+                      }
+                    >
+                      🗑 Delete
                     </button>
                   </div>
 
@@ -283,16 +308,31 @@ export default function ProductCategoryPage() {
         creating={mCreate.isPending}
       />
 
-      {/* Edit Buffer Modal */}
-      <EditBufferModal
-        open={showEditBuf}
+      {/* Edit Category Modal (name/code/buffer) */}
+      <EditCategoryModal
+        open={showEditCat}
         category={activeCat}
-        onClose={() => setShowEditBuf(false)}
-        onSave={(buffer) =>
-          mUpdate.mutate({ id: activeCat.id, patch: { buffer } })
-        }
+        onClose={() => setShowEditCat(false)}
+        onSave={(patch) => mUpdate.mutate({ id: activeCat.id, patch })}
         saving={mUpdate.isPending}
       />
+
+      {/* Confirm Delete Modal */}
+      {showConfirmDel && activeCat && (
+        <ConfirmModal
+          title="Delete Category"
+          message={
+            canDeleteActive
+              ? `Delete “${activeCat.name}”? This cannot be undone.`
+              : `“${activeCat.name}” still has items (Total Qty: ${totalQtyInCat}). 
+                 Please move or delete items before deleting this category.`
+          }
+          confirmText="Delete"
+          confirmDisabled={!canDeleteActive || mDelete.isPending}
+          onCancel={() => setShowConfirmDel(false)}
+          onConfirm={() => mDelete.mutate(activeCat.id)}
+        />
+      )}
     </section>
   );
 }
@@ -363,29 +403,52 @@ function AddCategoryModal({ open, onClose, onCreate, creating }) {
   );
 }
 
-function EditBufferModal({ open, category, onClose, onSave, saving }) {
-  const [buf, setBuf] = useState(0);
+/** Edit modal now allows Name + Code + Buffer **/
+function EditCategoryModal({ open, category, onClose, onSave, saving }) {
+  const [form, setForm] = useState({ name: "", code: "", buffer: 0 });
 
   useEffect(() => {
-    if (open && category) setBuf(Number(category.buffer ?? 0));
+    if (open && category) {
+      setForm({
+        name: category.name || "",
+        code: category.code || "",
+        buffer: Number(category.buffer ?? 0),
+      });
+    }
   }, [open, category]);
 
   if (!open || !category) return null;
+
   return (
     <div className="modal-backdrop">
-      <div className="modal mini">
-        <h3>Edit Buffer</h3>
-        <p className="muted" style={{ marginTop: -6 }}>
-          Category: <b>{category.name}</b>
-        </p>
-        <div className="grid1" style={{ marginTop: 8 }}>
+      <div className="modal sheet">
+        <h3>Edit Category</h3>
+        <div className="grid2">
+          <label>
+            <span>Name</span>
+            <input
+              value={form.name}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              required
+            />
+          </label>
+          <label>
+            <span>Code (optional)</span>
+            <input
+              value={form.code}
+              onChange={(e) => setForm((f) => ({ ...f, code: e.target.value }))}
+              placeholder="e.g., PSU-01"
+            />
+          </label>
           <label>
             <span>Buffer</span>
             <input
               type="number"
               min={0}
-              value={buf}
-              onChange={(e) => setBuf(Number(e.target.value || 0))}
+              value={form.buffer}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, buffer: Number(e.target.value || 0) }))
+              }
             />
           </label>
         </div>
@@ -395,10 +458,40 @@ function EditBufferModal({ open, category, onClose, onSave, saving }) {
           </button>
           <button
             className="btn primary"
-            onClick={() => onSave(Number(buf || 0))}
-            disabled={saving}
+            onClick={() =>
+              onSave({
+                name: form.name.trim(),
+                code: form.code?.trim() || null,
+                buffer: Number(form.buffer || 0),
+              })
+            }
+            disabled={saving || !form.name.trim()}
           >
             {saving ? "Saving…" : "Save"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ConfirmModal({
+  title = "Confirm",
+  message,
+  confirmText = "Confirm",
+  confirmDisabled = false,
+  onCancel,
+  onConfirm,
+}) {
+  return (
+    <div className="modal-backdrop" onMouseDown={onCancel}>
+      <div className="modal mini" onMouseDown={(e) => e.stopPropagation()}>
+        <h3>{title}</h3>
+        <p style={{ marginTop: 6 }}>{message}</p>
+        <div className="flex-right">
+          <button className="btn ghost" onClick={onCancel}>Cancel</button>
+          <button className="btn danger" onClick={onConfirm} disabled={confirmDisabled}>
+            {confirmText}
           </button>
         </div>
       </div>

@@ -275,3 +275,13 @@ label span {
   font-size: 14px;
   color: #445;
 }
+
+.btn.danger {
+  background: #ef4444;
+  border-color: #ef4444;
+  color: #fff;
+}
+.btn.danger:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
