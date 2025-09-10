@@ -170,6 +170,27 @@
 
 .dim { color: #6b7280; }
 
+
+/* Severity colors */
+.pill.ok {
+  background: #dcfce7;
+  color: #166534;
+}
+.pill.warn {
+  background: #fef3c7;
+  color:  #92400e;
+}
+.pill.low {
+  background: #fee2e2;
+  color:  #991b1b;
+}
+.pill.critical {
+  background: #fecaca;
+  color:  #7f1d1d;
+}
+
+/* keep your existing .pill, .pill.big, .pill.tiny utilities */
+
 /* ---------- modal styles (fixed width overflow) ---------- */
 .modal-backdrop {
   position: fixed;

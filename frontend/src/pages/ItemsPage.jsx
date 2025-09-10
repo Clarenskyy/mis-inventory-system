@@ -7,6 +7,7 @@ import {
   updateItem,
   deleteItem,
   adjustItem,
+  createCategory,
 } from "../lib/api.js";
 import "./items.css";
 
@@ -87,6 +88,12 @@ export default function ItemsPage() {
   }, [items, query, category, catMap]);
 
   /* ---------- mutations ---------- */
+const mCreateCategory = useMutation({
+  mutationFn: (payload) => createCategory(payload),
+  onSuccess: (created) => {
+    qc.invalidateQueries({ queryKey: ["categories"] });
+  },
+});
 
   const mCreate = useMutation({
     mutationFn: async ({ form, unit }) => {
@@ -391,6 +398,7 @@ function CreatePanel({ categories, onClose, onCreate, creating }) {
     category_id: categories[0]?.id ?? "",
   });
   const [chosenUnit, setChosenUnit] = useState("");
+  const [catModalOpen, setCatModalOpen] = useState(false); // ← new
 
   return (
     <div className="modal-backdrop">
@@ -422,22 +430,116 @@ function CreatePanel({ categories, onClose, onCreate, creating }) {
               maxLength={20}
             />
           </label>
-          <label>
-            <span>Product Category</span>
-            <select
-              value={form.category_id}
-              onChange={(e) => setForm((f) => ({ ...f, category_id: Number(e.target.value) }))}
+
+          {/* Category + “+ New” button side-by-side */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8 }}>
+            <label style={{ margin: 0 }}>
+              <span>Product Category</span>
+              <select
+                value={form.category_id}
+                onChange={(e) => setForm((f) => ({ ...f, category_id: Number(e.target.value) }))}
+              >
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              className="btn tiny"
+              style={{ alignSelf: "end" }}
+              onClick={() => setCatModalOpen(true)}
             >
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-          </label>
+              + New
+            </button>
+          </div>
         </div>
+
         <div className="flex-right">
           <button className="btn ghost" onClick={onClose}>Cancel</button>
           <button className="btn primary" onClick={() => onCreate(form, chosenUnit)} disabled={creating}>
             {creating ? "Creating…" : "Create Item"}
+          </button>
+        </div>
+
+        {/* inline modal for creating a category */}
+        {catModalOpen && (
+          <NewCategoryModal
+            onClose={() => setCatModalOpen(false)}
+            onCreated={(created) => {
+              // set the newly created category as selected
+              setForm((f) => ({ ...f, category_id: created.id }));
+              setCatModalOpen(false);
+            }}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function NewCategoryModal({ onClose, onCreated }) {
+  const qc = useQueryClient();
+  const [form, setForm] = useState({ name: "", code: "", buffer: 0 });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  async function submit() {
+    setError("");
+    setSaving(true);
+    try {
+      // call the API directly or via a tiny helper hook
+      const res = await createCategory({
+        name: form.name.trim(),
+        code: form.code?.trim() || null,
+        buffer: Number(form.buffer || 0),
+      });
+      await qc.invalidateQueries({ queryKey: ["categories"] });
+      onCreated?.(res);
+    } catch (e) {
+      setError(e?.response?.data?.detail || "Failed to create category");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="modal-backdrop" onMouseDown={onClose}>
+      <div className="modal mini" onMouseDown={(e) => e.stopPropagation()}>
+        <h3>New Product Category</h3>
+        <div className="grid1" style={{ marginTop: 8 }}>
+          <label>
+            <span>Name</span>
+            <input
+              value={form.name}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              placeholder="e.g., PSU, LAN Cable…"
+              required
+            />
+          </label>
+          <label>
+            <span>Code (optional)</span>
+            <input
+              value={form.code}
+              onChange={(e) => setForm((f) => ({ ...f, code: e.target.value }))}
+              placeholder="e.g., PSU-01"
+            />
+          </label>
+          <label>
+            <span>Buffer</span>
+            <input
+              type="number"
+              min={0}
+              value={form.buffer}
+              onChange={(e) => setForm((f) => ({ ...f, buffer: Number(e.target.value || 0) }))}
+            />
+          </label>
+        </div>
+        {error && <div className="error" style={{ marginTop: 8 }}>{error}</div>}
+        <div className="flex-right" style={{ marginTop: 10 }}>
+          <button className="btn ghost" onClick={onClose} disabled={saving}>Cancel</button>
+          <button className="btn primary" onClick={submit} disabled={saving || !form.name.trim()}>
+            {saving ? "Saving…" : "Create"}
           </button>
         </div>
       </div>

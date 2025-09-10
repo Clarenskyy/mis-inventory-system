@@ -21,6 +21,16 @@ function getUnit(id) {
   return m?.[String(id)] || "";
 }
 
+function getCatSeverity(total, buffer) {
+  const b = Number(buffer || 0);
+  if (b <= 0) return { key: "ok", label: "OK" };     // no buffer configured
+  const ratio = total / b;
+  if (ratio < 0.5) return { key: "critical", label: "Critical" };
+  if (ratio < 1)   return { key: "low",      label: "Low" };
+  if (ratio < 1.25)return { key: "warn",     label: "Watch" };
+  return { key: "ok", label: "OK" };
+}
+
 export default function ProductCategoryPage() {
   const qc = useQueryClient();
 
@@ -183,7 +193,7 @@ export default function ProductCategoryPage() {
             ) : (
               visibleCats.map((c) => {
                 const total = totalsByCategory.get(Number(c.id)) || 0;
-                const ok = total >= Number(c.buffer ?? 0);
+                const sev = getCatSeverity(total, c.buffer);
                 return (
                   <button
                     key={c.id}
@@ -192,9 +202,7 @@ export default function ProductCategoryPage() {
                   >
                     <div className="row">
                       <span className="name">{c.name}</span>
-                      <span className={`pill tiny ${ok ? "ok" : "danger"}`}>
-                        {ok ? "OK" : "Low"}
-                      </span>
+                      <span className={`pill tiny ${sev.key}`}>{sev.label}</span>
                     </div>
                     <div className="sub">Buffer: {c.buffer ?? 0}</div>
                   </button>
@@ -247,6 +255,17 @@ export default function ProductCategoryPage() {
                     <span className="muted">Total Qty:&nbsp;</span>
                     <b>{totalQtyInCat}</b>
                   </div>
+
+                  <div className="dot">•</div>
+                  {(() => {
+                    const sev = getCatSeverity(totalQtyInCat, activeCat.buffer);
+                    return (
+                      <div>
+                        <span className="muted">Status:&nbsp;</span>
+                        <span className={`pill big ${sev.key}`}>{sev.label}</span>
+                      </div>
+                    );
+                  })()}
 
                   <div className="spacer" />
 
