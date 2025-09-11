@@ -16,17 +16,18 @@ function getCatSeverity(total, buffer) {
 }
 
 const pillStyle = {
-  base: {
-    display: "inline-block",
-    padding: "4px 8px",
-    borderRadius: 999,
-    fontSize: 12,
-    fontWeight: 600,
-  },
+  base: { display: "inline-block", padding: "4px 8px", borderRadius: 999, fontSize: 12, fontWeight: 600 },
   ok:       { background: "#dcfce7", color: "#166534" },
   warn:     { background: "#fef3c7", color: "#92400e" },
   low:      { background: "#fee2e2", color: "#991b1b" },
   critical: { background: "#fecaca", color: "#7f1d1d" },
+};
+
+const categoryCellTone = {
+  ok:       { background: "transparent", color: "inherit" },
+  warn:     { background: pillStyle.warn.background,     color: pillStyle.warn.color },
+  low:      { background: pillStyle.low.background,      color: pillStyle.low.color },
+  critical: { background: pillStyle.critical.background, color: pillStyle.critical.color },
 };
 
 export default function DashboardPage() {
@@ -35,7 +36,7 @@ export default function DashboardPage() {
 
   const { data: items = [] } = useQuery({
     queryKey: ["items"],
-    queryFn: () => getItems({ limit: 1000 }), // bump a bit so totals are accurate
+    queryFn: getItems, // safe helper (no 1000 limit)
   });
 
   const { data: categories = [] } = useQuery({
@@ -43,7 +44,14 @@ export default function DashboardPage() {
     queryFn: getCategories,
   });
 
+  // count of item records
   const totalItems = items.length;
+
+  // total quantity across ALL items
+  const totalQuantity = useMemo(
+    () => (items || []).reduce((sum, it) => sum + Number(it.quantity ?? 0), 0),
+    [items]
+  );
 
   // Build totals per category
   const totalsByCategory = useMemo(() => {
@@ -62,14 +70,11 @@ export default function DashboardPage() {
       const sev = getCatSeverity(total, c.buffer);
       return { id: c.id, name: c.name, buffer: Number(c.buffer || 0), total, sev };
     });
-    // filter non-OK
     const filtered = rows.filter((r) => r.sev.key !== "ok");
-    // sort by severity (critical > low > warn), then by how far below buffer
     const order = { critical: 3, low: 2, warn: 1, ok: 0 };
     filtered.sort((a, b) => {
       const diff = order[b.sev.key] - order[a.sev.key];
       if (diff !== 0) return diff;
-      // secondary: distance from buffer
       const da = a.buffer - a.total;
       const db = b.buffer - b.total;
       return db - da;
@@ -84,7 +89,7 @@ export default function DashboardPage() {
         Welcome <span className="welcome-user">{firstName}</span>, to our Storage Inventory.
       </p>
 
-      {/* Intro panel with clipboard on the right */}
+      {/* Intro panel with clipboards on the right */}
       <div className="intro-panel card">
         <div className="intro-text">
           <h2>This is MIS Inventory</h2>
@@ -94,13 +99,26 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* Clipboard card on the right */}
-        <div className="clipboard">
-          <div className="clip-head">
-            <span className="clip-icon" aria-hidden>📋</span>
-            <span className="clip-title">Inventory Items</span>
+        {/* Right side: 2 mini cards */}
+        <div
+          className="clipboards"
+          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, minWidth: 260 }}
+        >
+          <div className="clipboard">
+            <div className="clip-head">
+              <span className="clip-icon" aria-hidden>📋</span>
+              <span className="clip-title">Inventory Items</span>
+            </div>
+            <div className="clip-count">{totalItems}</div>
           </div>
-          <div className="clip-count">{totalItems}</div>
+
+          <div className="clipboard">
+            <div className="clip-head">
+              <span className="clip-icon" aria-hidden>🧮</span>
+              <span className="clip-title">Total Items</span>
+            </div>
+            <div className="clip-count">{totalQuantity}</div>
+          </div>
         </div>
       </div>
 
@@ -129,11 +147,31 @@ export default function DashboardPage() {
             <tbody>
               {attentionCats.slice(0, 8).map((r) => (
                 <tr key={r.id}>
-                  <td style={{ padding: "10px 8px", borderTop: "1px solid #f3f4f7" }}>{r.name}</td>
-                  <td style={{ padding: "10px 8px", borderTop: "1px solid #f3f4f7" }}>
+                  <td
+                    style={{
+                      padding: "10px 8px",
+                      borderTop: "1px solid #f3f4f7",
+                      ...(categoryCellTone[r.sev.key] || categoryCellTone.ok),
+                    }}
+                  >
+                    {r.name}
+                  </td>
+                  <td
+                    style={{
+                      padding: "10px 8px",
+                      borderTop: "1px solid #f3f4f7",
+                      ...(categoryCellTone[r.sev.key] || categoryCellTone.ok),
+                    }}
+                  >
                     <b>{r.total}</b> / {r.buffer}
                   </td>
-                  <td style={{ padding: "10px 8px", borderTop: "1px solid #f3f4f7" }}>
+                  <td
+                    style={{
+                      padding: "10px 8px",
+                      borderTop: "1px solid #f3f4f7",
+                      ...(categoryCellTone[r.sev.key] || categoryCellTone.ok),
+                    }}
+                  >
                     <span
                       style={{
                         ...pillStyle.base,

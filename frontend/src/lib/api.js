@@ -44,10 +44,23 @@ export async function getMe() {
 }
 
 /* ------------- Items / Categories ------------- */
-export async function getItems({ q = "", limit = 50, offset = 0 } = {}) {
-  const { data } = await api.get("/items", { params: { q, limit, offset } });
-  return data;
+export async function getItems(params = {}) {
+  const cleaned = {};
+  if (params.q && params.q.trim()) cleaned.q = params.q.trim();
+
+  if (params.limit != null) {
+    const n = Number(params.limit);
+    if (!Number.isNaN(n)) cleaned.limit = Math.min(Math.max(1, n), 200); // cap to API
+  }
+  if (params.offset != null) {
+    const o = Number(params.offset);
+    if (!Number.isNaN(o)) cleaned.offset = Math.max(0, o);
+  }
+
+  const res = await api.get("/items", { params: cleaned }); // "/items" is fine; FastAPI may 307 to "/items/"
+  return res.data;
 }
+
 export async function getCategories({ q = "", limit = 50, offset = 0 } = {}) {
   const { data } = await api.get("/categories", { params: { q, limit, offset } });
   return data;
@@ -119,5 +132,23 @@ export async function setRecipientActive(id, active) {
 export async function deleteRecipient(id) {
   await api.delete(`/admin/recipients/${id}`);
 }
+export async function deleteItemsBulk(ids, note = "") {
+  // ensure ids are numbers
+  const payload = { ids: ids.map((x) => Number(x)), note };
+  const res = await api.delete("/items/bulk", {
+    data: payload,                     // <-- DELETE must put JSON here
+    headers: { "Content-Type": "application/json" },
+  });
+  return res.data;
+}
+
+export async function getNextItemCode(categoryId) {
+  const res = await api.get("/items/next-code", {
+    params: { category_id: Number(categoryId) },
+  });
+  return res.data; // { code: "MISCPU0007" }
+}
+
+
 
 export default api;

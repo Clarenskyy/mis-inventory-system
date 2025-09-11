@@ -258,3 +258,32 @@ def send_item_deleted(
     </div>
     """
     send_email(subject, html, db=db, to_list=to)
+
+def send_bulk_item_deletion(*, items: list[dict], note: str | None = None, to: list[str] | None = None):
+    # items: [{"code": "...", "name": "...", "qty": 0}, ...]
+    rows = "".join(
+        f"<tr><td style='padding:6px 8px;border:1px solid #e5e7eb'>{i['code']}</td>"
+        f"<td style='padding:6px 8px;border:1px solid #e5e7eb'>{i['name']}</td></tr>"
+        for i in items
+    )
+    note_html = f"<p style='margin:10px 0;color:#6b7280'>Note: {note}</p>" if note else ""
+    html = f"""
+    <div style="font-family:Segoe UI,Arial,sans-serif;max-width:560px;margin:auto;border:1px solid #e5e7eb;border-radius:12px;padding:16px">
+      <h2 style="margin:0 0 8px 0;font-size:18px;color:#111827">Bulk Delete (Items)</h2>
+      <p style="margin:0 0 12px 0;color:#374151;font-size:14px">The following items were deleted:</p>
+      <table style="border-collapse:collapse;width:100%;font-size:14px">
+        <thead>
+          <tr>
+            <th style="padding:6px 8px;border:1px solid #e5e7eb;background:#f9fafb;text-align:left">Code</th>
+            <th style="padding:6px 8px;border:1px solid #e5e7eb;background:#f9fafb;text-align:left">Name</th>
+          </tr>
+        </thead>
+        <tbody>{rows}</tbody>
+      </table>
+      {note_html}
+      <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0">
+      <div style="font-size:12px;color:#6b7280">Nidec MIS Inventory System</div>
+    </div>
+    """
+    subject = f"Bulk Delete: {len(items)} item(s)"
+    send_email(subject, html, to_list=to)

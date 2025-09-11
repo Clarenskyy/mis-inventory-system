@@ -1,0 +1,50 @@
+/* Fills the table cell and shows two traveling strokes on the border */
+.sb {
+  position: relative;
+  display: block;
+  width: 100%;
+  border-radius: 12px;
+}
+
+/* White card content (keeps your existing spacing) */
+.sb__content {
+  position: relative;
+  z-index: 1;
+  background: #fff;
+  color: #111827;
+  border: 1px solid #e5e7eb;  /* gray-200 */
+  border-radius: inherit;
+  padding: 8px 10px;
+}
+
+/* SVG overlay that paints only the border strokes */
+.sb__svg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: inherit;         /* for visual matching only */
+}
+
+/* Base stroke style (fractions via pathLength=1 on the <rect>) */
+.sb__stroke {
+  fill: none;
+  stroke: var(--seg-strong, #7f1d1d);
+  stroke-width: var(--stroke, 3);
+  stroke-linecap: round;
+  stroke-dasharray: var(--seg-frac, 0.06) calc(1 - var(--seg-frac, 0.06));
+  animation: sb-dash var(--speed, 8s) linear infinite;
+  filter: drop-shadow(0 0 4px var(--seg-weak, rgba(127, 29, 29, 0.5)));
+}
+
+/* Second comet: fainter + counter-rotating */
+.sb__stroke--b {
+  stroke: var(--seg-weak, rgba(127, 29, 29, 0.5));
+  animation-direction: reverse;
+  opacity: 0.95;
+}
+
+@keyframes sb-dash {
+  from { stroke-dashoffset: 0; }
+  to   { stroke-dashoffset: -1; } /* loop once around the rect */
+}

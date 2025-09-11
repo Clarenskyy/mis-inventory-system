@@ -3,47 +3,86 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func
-
+from fastapi import Body
+from app.schemas import ItemsBulkDeleteRequest
 from app.database import get_db
 from app import models, schemas, crud
 from app.utils import email as email_utils
+from sqlalchemy.exc import IntegrityError
+from app.utils.codes import next_item_code_for_category, normalize_cat3, MIS_PREFIX
+
+
 
 router = APIRouter()
 
 # ---------- Create ----------
+
 @router.post("/", response_model=schemas.ItemResponse, status_code=status.HTTP_201_CREATED)
 def create_item(
     payload: schemas.ItemCreate,
     db: Session = Depends(get_db),
     background: BackgroundTasks = None,
 ):
-    # Enforce unique code
-    exists = db.execute(
-        select(models.Item).where(models.Item.code == payload.code)
-    ).scalar_one_or_none()
-    if exists:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Item code already exists")
+    if not payload.category_id:
+        raise HTTPException(status_code=400, detail="category_id is required for auto item code")
 
-    try:
-        item = crud.create_item(db, payload)
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+    # normalize/validate incoming code (if any)
+    incoming = (payload.code or "").strip() or None
+    # enforce prefix if user typed a custom code
+    if incoming:
+        cat = db.get(models.Category, payload.category_id)
+        if not cat or not cat.code:
+            raise HTTPException(400, "Category must have a code")
+        expected_prefix = f"{MIS_PREFIX}{normalize_cat3(cat.code)}"
+        if not incoming.upper().startswith(expected_prefix):
+            # override to keep the scheme consistent
+            incoming = None
 
-    # Notify (fire-and-forget)
-    # Resolve category name (optional)
-    cat = db.get(models.Category, item.category_id) if item.category_id else None
-    if background is not None:
-        background.add_task(
-            email_utils.send_item_created,
-            code=item.code,
-            name=item.name,
-            quantity=item.quantity,
-            category_name=(cat.name if cat else None),
-            db=db,  # merge env + DB recipients
-        )
+    # Try a few times (handles race on UNIQUE(code))
+    for _ in range(5):
+        code = incoming or next_item_code_for_category(db, payload.category_id, fill_gaps=True)
+        payload.code = code
 
-    return item
+        # Optional friendly check (not strictly needed if UNIQUE constraint exists)
+        exists = db.execute(
+            select(models.Item).where(models.Item.code == payload.code)
+        ).scalar_one_or_none()
+        if exists:
+            incoming = None
+            continue
 
+        try:
+            item = crud.create_item(db, payload)
+        except IntegrityError:
+            db.rollback()
+            incoming = None
+            continue
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+
+        # notify (unchanged)
+        cat = db.get(models.Category, item.category_id) if item.category_id else None
+        if background is not None:
+            background.add_task(
+                email_utils.send_item_created,
+                code=item.code,
+                name=item.name,
+                quantity=item.quantity,
+                category_name=(cat.name if cat else None),
+                db=db,
+            )
+        return item
+
+    raise HTTPException(status_code=409, detail="Could not allocate a unique item code. Please retry.")
+
+
+@router.get("/next-code", response_model=schemas.NextCodeResponse)
+def get_next_code(
+    category_id: int = Query(..., description="Category ID to base the code on"),
+    db: Session = Depends(get_db),
+):
+    code = next_item_code_for_category(db, category_id, fill_gaps=True)
+    return schemas.NextCodeResponse(code=code)
 
 # ---------- Read (list with search/pagination) ----------
 @router.get("/", response_model=list[schemas.ItemResponse])
@@ -151,6 +190,38 @@ def adjust_stock(
 
 
 # ---------- Delete ----------
+
+@router.delete("/bulk", status_code=204)
+def bulk_delete_items(
+    payload: ItemsBulkDeleteRequest = Body(...),
+    background: BackgroundTasks = BackgroundTasks(),
+    db: Session = Depends(get_db),
+):
+    # fetch items first (to include in email), then delete
+    ids = list({int(i) for i in payload.ids})
+    if not ids:
+        return None
+
+    items = db.execute(select(models.Item).where(models.Item.id.in_(ids))).scalars().all()
+    if not items:
+        return None
+
+    # prepare for email summary before deleting
+    summary = [{"code": it.code, "name": it.name} for it in items]
+
+    # delete in one transaction
+    for it in items:
+        db.delete(it)
+    db.commit()
+
+    # one email for the batch
+    background.add_task(
+        email_utils.send_bulk_item_deletion,
+        items=summary,
+        note=payload.note or None,
+    )
+    return None
+
 @router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_item(item_id: int, db: Session = Depends(get_db), background: BackgroundTasks = None):
     item = db.get(models.Item, item_id)
@@ -175,3 +246,4 @@ def delete_item(item_id: int, db: Session = Depends(get_db), background: Backgro
         )
 
     return None
+
